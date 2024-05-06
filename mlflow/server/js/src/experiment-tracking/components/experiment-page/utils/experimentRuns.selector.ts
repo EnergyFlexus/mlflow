@@ -77,7 +77,7 @@ export type ExperimentRunsSelectorResult = {
 export type ExperimentRunsSelectorParams = {
   experiments: ExperimentEntity[];
   experimentIds?: string[];
-  lifecycleFilter?: LIFECYCLE_FILTER;
+  // lifecycleFilter?: LIFECYCLE_FILTER;
   modelVersionFilter?: MODEL_VERSION_FILTER;
   datasetsFilter?: DatasetSummary[];
 };
@@ -89,7 +89,7 @@ const extractRunInfos = (
   runUuids: string[],
   state: { entities: ExperimentStoreEntities },
   {
-    lifecycleFilter = LIFECYCLE_FILTER.ACTIVE,
+    // lifecycleFilter = LIFECYCLE_FILTER.ACTIVE,
     modelVersionFilter = MODEL_VERSION_FILTER.ALL_RUNS,
     datasetsFilter = [],
   }: ExperimentRunsSelectorParams,
@@ -100,14 +100,14 @@ const extractRunInfos = (
     runUuids
       // Get the basic run info
       .map((run_id) => [getRunInfo(run_id, state), getRunDatasets(run_id, state)])
-      // Filter out runs by given lifecycle filter
-      .filter(([rInfo, _]) => {
-        if (lifecycleFilter === LIFECYCLE_FILTER.ACTIVE) {
-          return rInfo.lifecycle_stage === 'active';
-        } else {
-          return rInfo.lifecycle_stage === 'deleted';
-        }
-      })
+      // // Filter out runs by given lifecycle filter TODO STATES
+      // .filter(([rInfo, _]) => {
+      //   if (lifecycleFilter === LIFECYCLE_FILTER.ACTIVE) {
+      //     return rInfo.lifecycle_stage === 'active';
+      //   } else {
+      //     return rInfo.lifecycle_stage === 'deleted';
+      //   }
+      // })
       // Filter out runs by given model version filter
       .filter(([rInfo, _]) => {
         if (modelVersionFilter === MODEL_VERSION_FILTER.ALL_RUNS) {

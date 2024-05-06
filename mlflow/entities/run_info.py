@@ -1,17 +1,15 @@
 from mlflow.entities._mlflow_object import _MlflowObject
-from mlflow.entities.lifecycle_stage import LifecycleStage
 from mlflow.entities.run_status import RunStatus
-from mlflow.exceptions import MlflowException
-from mlflow.protos.databricks_pb2 import INVALID_PARAMETER_VALUE
 from mlflow.protos.service_pb2 import RunInfo as ProtoRunInfo
 
 
 def check_run_is_active(run_info):
-    if run_info.lifecycle_stage != LifecycleStage.ACTIVE:
-        raise MlflowException(
-            f"The run {run_info.run_id} must be in 'active' lifecycle_stage.",
-            error_code=INVALID_PARAMETER_VALUE,
-        )
+    # if run_info.lifecycle_stage != LifecycleStage.ACTIVE:
+    #     raise MlflowException( TODO check state to active
+    #         f"The run {run_info.run_id} must be in 'active' lifecycle_stage.",
+    #         error_code=INVALID_PARAMETER_VALUE,
+    #     )
+    return
 
 
 class searchable_attribute(property):
@@ -39,10 +37,10 @@ class RunInfo(_MlflowObject):
         status,
         start_time,
         end_time,
-        lifecycle_stage,
         artifact_uri=None,
         run_id=None,
         run_name=None,
+        run_state_id=None,
     ):
         if experiment_id is None:
             raise Exception("experiment_id cannot be None")
@@ -62,9 +60,9 @@ class RunInfo(_MlflowObject):
         self._status = status
         self._start_time = start_time
         self._end_time = end_time
-        self._lifecycle_stage = lifecycle_stage
         self._artifact_uri = artifact_uri
         self._run_name = run_name
+        self._run_state_id = run_state_id
 
     def __eq__(self, other):
         if type(other) is type(self):
@@ -72,17 +70,17 @@ class RunInfo(_MlflowObject):
             return self.__dict__ == other.__dict__
         return False
 
-    def _copy_with_overrides(self, status=None, end_time=None, lifecycle_stage=None, run_name=None):
+    def _copy_with_overrides(self, status=None, end_time=None, run_state_id=None, run_name=None):
         """A copy of the RunInfo with certain attributes modified."""
         proto = self.to_proto()
         if status:
             proto.status = status
         if end_time:
             proto.end_time = end_time
-        if lifecycle_stage:
-            proto.lifecycle_stage = lifecycle_stage
         if run_name:
             proto.run_name = run_name
+        if run_state_id:
+            proto.run_state_id = run_state_id
         return RunInfo.from_proto(proto)
 
     @property
@@ -137,12 +135,11 @@ class RunInfo(_MlflowObject):
         return self._artifact_uri
 
     @property
-    def lifecycle_stage(self):
+    def run_state_id(self):
         """
-        One of the values in :py:class:`mlflow.entities.lifecycle_stage.LifecycleStage`
-        describing the lifecycle stage of the run.
+        Describing the state of the run.
         """
-        return self._lifecycle_stage
+        return self._run_state_id
 
     def to_proto(self):
         proto = ProtoRunInfo()
@@ -158,7 +155,8 @@ class RunInfo(_MlflowObject):
             proto.end_time = self.end_time
         if self.artifact_uri:
             proto.artifact_uri = self.artifact_uri
-        proto.lifecycle_stage = self.lifecycle_stage
+        if self.run_state_id:
+            proto.run_state_id = self.run_state_id
         return proto
 
     @classmethod
@@ -177,7 +175,7 @@ class RunInfo(_MlflowObject):
             status=RunStatus.to_string(proto.status),
             start_time=proto.start_time,
             end_time=end_time,
-            lifecycle_stage=proto.lifecycle_stage,
+            run_state_id=proto.run_state_id,
             artifact_uri=proto.artifact_uri,
         )
 

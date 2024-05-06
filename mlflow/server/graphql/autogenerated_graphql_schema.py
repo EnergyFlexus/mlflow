@@ -103,7 +103,7 @@ class MlflowRunInfo(graphene.ObjectType):
     start_time = LongString()
     end_time = LongString()
     artifact_uri = graphene.String()
-    lifecycle_stage = graphene.String()
+    run_state_id = graphene.String()
 
 
 class MlflowRun(graphene.ObjectType):
@@ -129,6 +129,7 @@ class MlflowExperiment(graphene.ObjectType):
     last_update_time = LongString()
     creation_time = LongString()
     tags = graphene.List(graphene.NonNull(MlflowExperimentTag))
+    run_state_ids = graphene.List(graphene.String)
 
 
 class MlflowGetExperimentResponse(graphene.ObjectType):

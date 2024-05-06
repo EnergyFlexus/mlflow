@@ -19,7 +19,17 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Union
 import yaml
 
 import mlflow
-from mlflow.entities import DatasetInput, Experiment, FileInfo, Metric, Param, Run, RunTag, ViewType
+from mlflow.entities import (
+    DatasetInput,
+    Experiment,
+    FileInfo,
+    Metric,
+    Param,
+    Run,
+    RunState,
+    RunTag,
+    ViewType,
+)
 from mlflow.entities.model_registry import ModelVersion, RegisteredModel
 from mlflow.entities.model_registry.model_version_stages import ALL_STAGES
 from mlflow.exceptions import MlflowException
@@ -356,6 +366,23 @@ class MlflowClient:
             status: RUNNING
         """
         return self._tracking_client.create_run(experiment_id, start_time, tags, run_name)
+
+    def create_state(
+        self,
+        experiment_id: str,
+        name: str,
+    ) -> RunState:
+        """
+        Create a :py:class:`mlflow.entities.RubState` object.
+
+        Args:
+            experiment_id: The string ID of the experiment to create a run in.
+            name: Name of the state
+
+        Returns:
+            :py:class:`mlflow.entities.RunState` that was created.
+        """
+        return self._tracking_client.create_state(experiment_id, name)
 
     def search_experiments(
         self,

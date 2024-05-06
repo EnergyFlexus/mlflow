@@ -51,7 +51,7 @@ export const useExperimentRuns = (
       setRunsData(
         experimentRunsSelector(store, {
           datasetsFilter: requestedFacets.datasetsFilter,
-          lifecycleFilter: requestedFacets.lifecycleFilter,
+          // lifecycleFilter: requestedFacets.lifecycleFilter,
           modelVersionFilter: requestedFacets.modelVersionFilter,
           // In the new version of the view state, experiment IDs are used instead of full experiment entities:
           experiments: [],

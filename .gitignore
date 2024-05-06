@@ -115,3 +115,6 @@ a.md
 
 # Ignore a gunicorn config file
 gunicorn.conf.py
+
+# Ignore http test files
+.http

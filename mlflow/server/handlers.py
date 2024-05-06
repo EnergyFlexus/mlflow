@@ -67,6 +67,7 @@ from mlflow.protos.model_registry_pb2 import (
 from mlflow.protos.service_pb2 import (
     CreateExperiment,
     CreateRun,
+    CreateState,
     DeleteExperiment,
     DeleteRun,
     DeleteTag,
@@ -726,6 +727,28 @@ def _create_run():
 
     response_message = CreateRun.Response()
     response_message.run.MergeFrom(run.to_proto())
+    response = Response(mimetype="application/json")
+    response.set_data(message_to_json(response_message))
+    return response
+
+
+@catch_mlflow_exception
+@_disable_if_artifacts_only
+def _create_state():
+    request_message = _get_request_message(
+        CreateState(),
+        schema={
+            "experiment_id": [_assert_string],
+            "name": [_assert_string],
+        },
+    )
+
+    state = _get_tracking_store().create_state(
+        experiment_id=request_message.experiment_id, name=request_message.name
+    )
+
+    response_message = CreateState.Response()
+    response_message.state.MergeFrom(state.to_proto())
     response = Response(mimetype="application/json")
     response.set_data(message_to_json(response_message))
     return response
@@ -2314,6 +2337,7 @@ HANDLERS = {
     RestoreExperiment: _restore_experiment,
     UpdateExperiment: _update_experiment,
     CreateRun: _create_run,
+    CreateState: _create_state,
     UpdateRun: _update_run,
     DeleteRun: _delete_run,
     RestoreRun: _restore_run,

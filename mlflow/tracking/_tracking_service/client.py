@@ -141,6 +141,20 @@ class TrackingServiceClient:
             run_name=run_name,
         )
 
+    def create_state(self, experiment_id, name):
+        """
+        Create a :py:class:`mlflow.entities.RubState` object.
+
+        Args:
+            experiment_id: The string ID of the experiment to create a run in.
+            name: Name of the state
+
+        Returns:
+            :py:class:`mlflow.entities.RunState` that was created.
+        """
+
+        return self.store.create_state(experiment_id=experiment_id, name=name)
+
     def search_experiments(
         self,
         view_type=ViewType.ACTIVE_ONLY,

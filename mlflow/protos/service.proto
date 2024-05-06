@@ -147,6 +147,20 @@ service MlflowService {
     };
   }
 
+  // Create a new state within an experiment.
+  rpc createState(CreateState) returns (CreateState.Response) {
+    option (rpc) = {
+      endpoints: [{
+        method: "POST",
+        path: "/mlflow/states/create"
+        since { major: 2, minor: 0 },
+      }],
+
+      visibility: PUBLIC,
+      rpc_doc_title: "Create State",
+    };
+  }
+
   // Update run metadata.
   //
   rpc updateRun(UpdateRun) returns (UpdateRun.Response) {
@@ -582,8 +596,19 @@ message RunInfo {
   // If not set, the local ``./mlruns`` directory is  chosen.
   optional string artifact_uri = 13;
 
-  // Current life cycle stage of the experiment : OneOf("active", "deleted")
-  optional string lifecycle_stage = 14;
+  // Current state of run
+  optional string run_state_id = 14;
+}
+
+message RunState {
+  // The state ID.
+  optional string state_id = 1;
+
+  // The experiment ID.
+  optional string experiment_id = 2;
+
+  // Name of the state.
+  optional string name = 3;
 }
 
 // Experiment
@@ -609,6 +634,9 @@ message Experiment {
 
   // Tags: Additional metadata key-value pairs.
   repeated ExperimentTag tags = 7;
+  
+  // All states for the experiment.
+  repeated string run_state_ids = 8;
 }
 
 // DatasetInput. Represents a dataset and input tags.
@@ -799,6 +827,21 @@ message CreateRun {
   message Response {
     // The newly created run.
     optional Run run = 1;
+  }
+}
+
+message CreateState {
+  option (scalapb.message).extends = "com.databricks.rpc.RPC[$this.Response]";
+
+  // ID of the associated experiment.
+  optional string experiment_id = 1;
+
+  // Name of the state.
+  optional string name = 2;
+
+  message Response {
+    // The newly created state.
+    optional RunState state = 1;
   }
 }
 
