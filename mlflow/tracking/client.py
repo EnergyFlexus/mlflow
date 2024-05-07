@@ -399,6 +399,17 @@ class MlflowClient:
         """
         return self._tracking_client.get_state(state_id)
 
+    def delete_state(self, state_id):
+        """
+        Delete a :py:class:`mlflow.entities.RunState` object.
+
+        Args:
+            state_id: The string ID of the state.
+
+        """
+
+        return self._tracking_client.delete_state(state_id=state_id)
+
     def search_experiments(
         self,
         view_type: int = ViewType.ACTIVE_ONLY,

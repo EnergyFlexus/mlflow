@@ -740,6 +740,30 @@ class FileStore(AbstractStore):
 
         return RunState.from_dictionary(state_dict)
 
+    def delete_state(self, state_id):
+        """
+        Deletes a state by ID.
+        """
+        if state_id is None:
+            raise MlflowException("state_id is None", databricks_pb2.INVALID_STATE)
+
+        states_meta_path = os.path.join(_default_root_dir(), FileStore.META_STATES_FILE_NAME)
+        if not os.path.exists(states_meta_path):
+            raise MlflowException(
+                "States does not exist at all.",
+                databricks_pb2.RESOURCE_DOES_NOT_EXIST,
+            )
+
+        states_dict = read_yaml(_default_root_dir(), FileStore.META_STATES_FILE_NAME)
+        states_all = states_dict["states"]
+        states_all = list(filter(lambda s: s["state_id"] != state_id, states_all))
+
+        states_dict["states"] = states_all
+        write_yaml(
+            _default_root_dir(), FileStore.META_STATES_FILE_NAME, states_dict, overwrite=True
+        )
+        return {}
+
     def _get_run_from_info(self, run_info):
         metrics = self._get_all_metrics(run_info)
         params = self._get_all_params(run_info)
