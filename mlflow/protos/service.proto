@@ -315,6 +315,32 @@ service MlflowService {
     };
   }
 
+  // Search for states of experiment.
+  rpc searchStates (SearchStates) returns (SearchStates.Response) {
+    option (rpc) = {
+      endpoints: [{
+        method: "POST",
+        path: "/mlflow/states/search"
+        since { major: 2, minor: 0 },
+      }],
+      visibility: PUBLIC,
+      rpc_doc_title: "Search States",
+    };
+  }
+
+  // Search state by ID.
+  rpc getState (GetState) returns (GetState.Response) {
+    option (rpc) = {
+      endpoints: [{
+        method: "GET",
+        path: "/mlflow/states/get"
+        since { major: 2, minor: 0 },
+      }],
+      visibility: PUBLIC,
+      rpc_doc_title: "Get State",
+    };
+  }
+
   // List artifacts for a run. Takes an optional ``artifact_path`` prefix which if specified,
   // the response contains only artifacts with the specified prefix.
   //
@@ -1044,6 +1070,30 @@ message SearchRuns {
     // Runs that match the search criteria.
     repeated Run runs = 1;
     optional string next_page_token = 2;
+  }
+}
+
+message SearchStates {
+  option (scalapb.message).extends = "com.databricks.rpc.RPC[$this.Response]";
+
+  // Experiment ID to search over.
+  optional string experiment_id = 1;
+
+  message Response {
+    // States that match the experiment_id.
+    repeated RunState states = 1;
+  }
+}
+
+message GetState {
+  option (scalapb.message).extends = "com.databricks.rpc.RPC[$this.Response]";
+
+  // State ID to search over.
+  optional string state_id = 1;
+
+  message Response {
+    // State that match the state_id.
+    optional RunState state = 1;
   }
 }
 

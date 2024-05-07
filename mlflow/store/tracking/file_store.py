@@ -679,7 +679,7 @@ class FileStore(AbstractStore):
         if experiment_id is None:
             raise MlflowException("experiment_id is None", databricks_pb2.INVALID_STATE)
         if name is None:
-            raise MlflowException("Nmae of the state is None", databricks_pb2.INVALID_STATE)
+            raise MlflowException("Name of the state is None", databricks_pb2.INVALID_STATE)
 
         experiment = self.get_experiment(experiment_id)
         if experiment is None:
@@ -713,6 +713,32 @@ class FileStore(AbstractStore):
             _default_root_dir(), FileStore.META_STATES_FILE_NAME, dict(states), overwrite=True
         )
         return run_state
+
+    def get_state(self, state_id):
+        """
+        Gets a state by ID.
+        """
+        if state_id is None:
+            raise MlflowException("state_id is None", databricks_pb2.INVALID_STATE)
+
+        states_meta_path = os.path.join(_default_root_dir(), FileStore.META_STATES_FILE_NAME)
+        if not os.path.exists(states_meta_path):
+            raise MlflowException(
+                "States does not exist at all.",
+                databricks_pb2.RESOURCE_DOES_NOT_EXIST,
+            )
+
+        states_dict = read_yaml(_default_root_dir(), FileStore.META_STATES_FILE_NAME)
+        states_all = states_dict["states"]
+        state_dict = next((state for state in states_all if state["state_id"] == state_id), None)
+
+        if state_dict is None:
+            raise MlflowException(
+                f"State '{state_id}' does not exist.",
+                databricks_pb2.RESOURCE_DOES_NOT_EXIST,
+            )
+
+        return RunState.from_dictionary(state_dict)
 
     def _get_run_from_info(self, run_info):
         metrics = self._get_all_metrics(run_info)
@@ -972,6 +998,23 @@ class FileStore(AbstractStore):
         sorted_runs = SearchUtils.sort(filtered, order_by)
         runs, next_page_token = SearchUtils.paginate(sorted_runs, page_token, max_results)
         return runs, next_page_token
+
+    def search_states(self, experiment_id):
+        if not self._has_experiment(experiment_id):
+            return []
+
+        states_meta_path = os.path.join(_default_root_dir(), FileStore.META_STATES_FILE_NAME)
+        if not os.path.exists(states_meta_path):
+            return []
+
+        states_dict = read_yaml(_default_root_dir(), FileStore.META_STATES_FILE_NAME)
+
+        states_all = states_dict["states"]
+        return [
+            RunState.from_dictionary(state)
+            for state in states_all
+            if state["experiment_id"] == experiment_id
+        ]
 
     def log_metric(self, run_id, metric):
         _validate_run_id(run_id)

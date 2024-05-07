@@ -71,3 +71,8 @@ class RunState(_MlflowObject):
     @classmethod
     def from_proto(cls, proto):
         return cls(state_id=proto.state_id, experiment_id=proto.experimdent_id, name=proto.name)
+
+    @classmethod
+    def from_dictionary(cls, the_dict):
+        filtered_dict = {key: value for key, value in the_dict.items() if key in cls._properties()}
+        return cls(**filtered_dict)

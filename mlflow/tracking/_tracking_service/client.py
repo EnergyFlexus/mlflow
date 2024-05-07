@@ -143,7 +143,7 @@ class TrackingServiceClient:
 
     def create_state(self, experiment_id, name):
         """
-        Create a :py:class:`mlflow.entities.RubState` object.
+        Create a :py:class:`mlflow.entities.RunState` object.
 
         Args:
             experiment_id: The string ID of the experiment to create a run in.
@@ -154,6 +154,19 @@ class TrackingServiceClient:
         """
 
         return self.store.create_state(experiment_id=experiment_id, name=name)
+
+    def get_state(self, state_id):
+        """
+        Get a :py:class:`mlflow.entities.RunState` object.
+
+        Args:
+            state_id: The string ID of the state.
+
+        Returns:
+            :py:class:`mlflow.entities.RunState`.
+        """
+
+        return self.store.get_state(state_id=state_id)
 
     def search_experiments(
         self,
@@ -693,3 +706,12 @@ class TrackingServiceClient:
             order_by=order_by,
             page_token=page_token,
         )
+
+    def search_states(self, experiment_id):
+        """Search states.
+
+        Returns:
+            :py:class:`RunState <mlflow.entities.RunState>` objects.
+
+        """
+        return self.store.search_states(experiment_id=experiment_id)

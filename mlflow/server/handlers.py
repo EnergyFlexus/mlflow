@@ -76,6 +76,7 @@ from mlflow.protos.service_pb2 import (
     GetMetricHistory,
     GetMetricHistoryBulkInterval,
     GetRun,
+    GetState,
     ListArtifacts,
     LogBatch,
     LogInputs,
@@ -87,6 +88,7 @@ from mlflow.protos.service_pb2 import (
     RestoreRun,
     SearchExperiments,
     SearchRuns,
+    SearchStates,
     SetExperimentTag,
     SetTag,
     UpdateExperiment,
@@ -756,6 +758,22 @@ def _create_state():
 
 @catch_mlflow_exception
 @_disable_if_artifacts_only
+def _get_state():
+    request_message = _get_request_message(
+        GetState(),
+        schema={"state_id": [_assert_string]},
+    )
+    state = _get_tracking_store().get_state(state_id=request_message.state_id)
+
+    response_message = GetState.Response()
+    response_message.state.MergeFrom(state.to_proto())
+    response = Response(mimetype="application/json")
+    response.set_data(message_to_json(response_message))
+    return response
+
+
+@catch_mlflow_exception
+@_disable_if_artifacts_only
 def _update_run():
     request_message = _get_request_message(
         UpdateRun(),
@@ -972,6 +990,23 @@ def _search_runs():
     response_message.runs.extend([r.to_proto() for r in run_entities])
     if run_entities.token:
         response_message.next_page_token = run_entities.token
+    response = Response(mimetype="application/json")
+    response.set_data(message_to_json(response_message))
+    return response
+
+
+@catch_mlflow_exception
+@_disable_if_artifacts_only
+def _search_states():
+    request_message = _get_request_message(
+        SearchStates(),
+        schema={"experiment_id": [_assert_string]},
+    )
+    response_message = SearchStates.Response()
+    experiment_id = request_message.experiment_id
+
+    states = _get_tracking_store().search_states(experiment_id)
+    response_message.states.extend([s.to_proto() for s in states])
     response = Response(mimetype="application/json")
     response.set_data(message_to_json(response_message))
     return response
@@ -2338,6 +2373,7 @@ HANDLERS = {
     UpdateExperiment: _update_experiment,
     CreateRun: _create_run,
     CreateState: _create_state,
+    GetState: _get_state,
     UpdateRun: _update_run,
     DeleteRun: _delete_run,
     RestoreRun: _restore_run,
@@ -2350,6 +2386,7 @@ HANDLERS = {
     LogModel: _log_model,
     GetRun: _get_run,
     SearchRuns: _search_runs,
+    SearchStates: _search_states,
     ListArtifacts: _list_artifacts,
     GetMetricHistory: _get_metric_history,
     GetMetricHistoryBulkInterval: get_metric_history_bulk_interval_handler,

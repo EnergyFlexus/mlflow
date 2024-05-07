@@ -384,6 +384,21 @@ class MlflowClient:
         """
         return self._tracking_client.create_state(experiment_id, name)
 
+    def get_state(
+        self,
+        state_id: str,
+    ) -> RunState:
+        """
+        Get a :py:class:`mlflow.entities.RunState` object.
+
+        Args:
+            state_id: The string ID of the state.
+
+        Returns:
+            :py:class:`mlflow.entities.RunState`.
+        """
+        return self._tracking_client.get_state(state_id)
+
     def search_experiments(
         self,
         view_type: int = ViewType.ACTIVE_ONLY,
@@ -2327,6 +2342,15 @@ class MlflowClient:
         return self._tracking_client.search_runs(
             experiment_ids, filter_string, run_view_type, max_results, order_by, page_token
         )
+
+    def search_states(self, experiment_id):
+        """Search states.
+
+        Returns:
+            :py:class:`RunState <mlflow.entities.RunState>` objects.
+
+        """
+        return self._tracking_client.search_states(experiment_id=experiment_id)
 
     # Registry API
 
