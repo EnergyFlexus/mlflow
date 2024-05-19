@@ -596,11 +596,13 @@ class FileStore(AbstractStore):
             return os.path.basename(os.path.abspath(experiment_dir)), runs[0]
         return None, None
 
-    def update_run_info(self, run_id, run_status, end_time, run_name):
+    def update_run_info(self, run_id, run_status, end_time, run_name, state_id=None):
         _validate_run_id(run_id)
         run_info = self._get_run_info(run_id)
         check_run_is_active(run_info)
-        new_info = run_info._copy_with_overrides(run_status, end_time, run_name=run_name)
+        new_info = run_info._copy_with_overrides(
+            run_status, end_time, run_name=run_name, run_state_id=state_id
+        )
         if run_name:
             self._set_run_tag(run_info, RunTag(MLFLOW_RUN_NAME, run_name))
         self._overwrite_run_info(new_info)
@@ -672,6 +674,42 @@ class FileStore(AbstractStore):
             )
         return self._get_run_from_info(run_info)
 
+    def set_state(self, run_id, state_id):
+        """
+        Set the state to a run.
+        """
+        if run_id is None:
+            raise MlflowException("run_id is None", databricks_pb2.INVALID_STATE)
+        if state_id is None:
+            raise MlflowException("state_id is None", databricks_pb2.INVALID_STATE)
+
+        run = self.get_run(run_id)
+        run_info = run.info
+        experiment_id = run_info.experiment_id
+
+        experiment = self.get_experiment(experiment_id)
+        if experiment.lifecycle_stage != LifecycleStage.ACTIVE:
+            raise MlflowException(
+                f"Could not create run under non-active experiment with ID {experiment_id}.",
+                databricks_pb2.INVALID_STATE,
+            )
+
+        states_in_exp = self.search_states(experiment_id)
+        run_state = next((state for state in states_in_exp if state.state_id == state_id), None)
+
+        if run_state is None:
+            raise MlflowException("State is not exist.", databricks_pb2.INVALID_STATE)
+
+        self.update_run_info(
+            run_id,
+            RunStatus.from_string(run_info.status),
+            run_info.end_time,
+            run_info.run_name,
+            state_id,
+        )
+
+        return self.get_run(run_id)
+
     def create_state(self, experiment_id, name, state_id=None):
         """
         Creates a state with the specified name.
@@ -708,6 +746,13 @@ class FileStore(AbstractStore):
             states["states"] = []
 
         dict_run_state = dict(run_state)
+
+        for s in states["states"]:
+            if s.name == run_state.name:
+                raise MlflowException(
+                    "State with this name is already exists.", databricks_pb2.INVALID_STATE
+                )
+
         states["states"].append(dict_run_state)
         write_yaml(
             _default_root_dir(), FileStore.META_STATES_FILE_NAME, dict(states), overwrite=True

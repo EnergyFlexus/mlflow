@@ -174,6 +174,20 @@ service MlflowService {
     };
   }
 
+  // Sets the state to a run.
+  rpc setState(SetState) returns (SetState.Response) {
+    option (rpc) = {
+      endpoints: [{
+        method: "POST",
+        path: "/mlflow/states/set"
+        since { major: 2, minor: 0 },
+      }],
+
+      visibility: PUBLIC,
+      rpc_doc_title: "Set State",
+    };
+  }
+
   // Update run metadata.
   //
   rpc updateRun(UpdateRun) returns (UpdateRun.Response) {
@@ -881,6 +895,21 @@ message CreateState {
   message Response {
     // The newly created state.
     optional RunState state = 1;
+  }
+}
+
+message SetState {
+  option (scalapb.message).extends = "com.databricks.rpc.RPC[$this.Response]";
+
+  // ID of the associated state.
+  optional string state_id = 1;
+
+  // Id of the run to update.
+  optional string run_id = 2;
+
+  message Response {
+    // Run.
+    optional Run run = 1;
   }
 }
 

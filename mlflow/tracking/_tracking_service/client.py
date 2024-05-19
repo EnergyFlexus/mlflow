@@ -155,6 +155,20 @@ class TrackingServiceClient:
 
         return self.store.create_state(experiment_id=experiment_id, name=name)
 
+    def set_state(self, run_id, state_id):
+        """
+        Sets state to a run.
+
+        Args:
+            run_id: Id of the run.
+            state_id: Id of the state.
+
+        Returns:
+            :py:class:`mlflow.entities.Run` that was updated.
+        """
+
+        return self.store.set_state(run_id=run_id, state_id=state_id)
+
     def get_state(self, state_id):
         """
         Get a :py:class:`mlflow.entities.RunState` object.

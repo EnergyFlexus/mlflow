@@ -384,6 +384,20 @@ class MlflowClient:
         """
         return self._tracking_client.create_state(experiment_id, name)
 
+    def set_state(self, run_id: str, state_id: str) -> Run:
+        """
+        Sets state to a run.
+
+        Args:
+            run_id: Id of the run.
+            state_id: Id of the state.
+
+        Returns:
+            :py:class:`mlflow.entities.Run` that was updated.
+        """
+
+        return self._tracking_client.set_state(run_id=run_id, state_id=state_id)
+
     def get_state(
         self,
         state_id: str,

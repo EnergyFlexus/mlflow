@@ -91,6 +91,7 @@ from mlflow.protos.service_pb2 import (
     SearchRuns,
     SearchStates,
     SetExperimentTag,
+    SetState,
     SetTag,
     UpdateExperiment,
     UpdateRun,
@@ -759,10 +760,30 @@ def _create_state():
 
 @catch_mlflow_exception
 @_disable_if_artifacts_only
+def _set_state():
+    request_message = _get_request_message(
+        SetState(),
+        schema={
+            "state_id": [_assert_required, _assert_string],
+            "run_id": [_assert_required, _assert_string],
+        },
+    )
+    run = _get_tracking_store().set_state(
+        state_id=request_message.state_id, run_id=request_message.run_id
+    )
+    response_message = SetState.Response()
+    response_message.run.MergeFrom(run.to_proto())
+    response = Response(mimetype="application/json")
+    response.set_data(message_to_json(response_message))
+    return response
+
+
+@catch_mlflow_exception
+@_disable_if_artifacts_only
 def _get_state():
     request_message = _get_request_message(
         GetState(),
-        schema={"state_id": [_assert_string]},
+        schema={"state_id": [_assert_required, _assert_string]},
     )
     state = _get_tracking_store().get_state(state_id=request_message.state_id)
     response_message = GetState.Response()
@@ -777,7 +798,7 @@ def _get_state():
 def _delete_state():
     request_message = _get_request_message(
         DeleteState(),
-        schema={"state_id": [_assert_string]},
+        schema={"state_id": [_assert_required, _assert_string]},
     )
     _get_tracking_store().delete_state(state_id=request_message.state_id)
     response_message = DeleteState.Response()
@@ -2387,6 +2408,7 @@ HANDLERS = {
     UpdateExperiment: _update_experiment,
     CreateRun: _create_run,
     CreateState: _create_state,
+    SetState: _set_state,
     GetState: _get_state,
     DeleteState: _delete_state,
     UpdateRun: _update_run,
