@@ -740,3 +740,12 @@ class TrackingServiceClient:
 
         """
         return self.store.search_states(experiment_id=experiment_id)
+
+    def search_state_by_name(self, experiment_id, name):
+        """Search state by name.
+
+        Returns:s
+            :py:class:`RunState <mlflow.entities.RunState>` object.
+
+        """
+        return self.store.search_state_by_name(experiment_id=experiment_id, name=name)

@@ -355,6 +355,19 @@ service MlflowService {
     };
   }
 
+  // Search for state of experiment by name.
+  rpc searchStateByName (SearchStateByName) returns (SearchStateByName.Response) {
+    option (rpc) = {
+      endpoints: [{
+        method: "POST",
+        path: "/mlflow/states/search-by-name"
+        since { major: 2, minor: 0 },
+      }],
+      visibility: PUBLIC,
+      rpc_doc_title: "Search State By Name",
+    };
+  }
+
   // Search state by ID.
   rpc getState (GetState) returns (GetState.Response) {
     option (rpc) = {
@@ -1124,6 +1137,21 @@ message SearchStates {
   message Response {
     // States that match the experiment_id.
     repeated RunState states = 1;
+  }
+}
+
+message SearchStateByName {
+  option (scalapb.message).extends = "com.databricks.rpc.RPC[$this.Response]";
+
+  // Experiment ID to search over.
+  optional string experiment_id = 1;
+
+  // Name of the state to search.
+  optional string name = 2;
+
+  message Response {
+    // State that match the experiment_id and name.
+    optional RunState state = 1;
   }
 }
 

@@ -89,6 +89,7 @@ from mlflow.protos.service_pb2 import (
     RestoreRun,
     SearchExperiments,
     SearchRuns,
+    SearchStateByName,
     SearchStates,
     SetExperimentTag,
     SetState,
@@ -1035,13 +1036,35 @@ def _search_runs():
 def _search_states():
     request_message = _get_request_message(
         SearchStates(),
-        schema={"experiment_id": [_assert_string]},
+        schema={"experiment_id": [_assert_required, _assert_string]},
     )
     response_message = SearchStates.Response()
     experiment_id = request_message.experiment_id
 
     states = _get_tracking_store().search_states(experiment_id)
     response_message.states.extend([s.to_proto() for s in states])
+    response = Response(mimetype="application/json")
+    response.set_data(message_to_json(response_message))
+    return response
+
+
+@catch_mlflow_exception
+@_disable_if_artifacts_only
+def _search_state_by_name():
+    request_message = _get_request_message(
+        SearchStateByName(),
+        schema={
+            "experiment_id": [_assert_required, _assert_string],
+            "name": [_assert_required, _assert_string],
+        },
+    )
+    response_message = SearchStateByName.Response()
+    experiment_id = request_message.experiment_id
+    name = request_message.name
+
+    state = _get_tracking_store().search_state_by_name(experiment_id, name)
+    if state is not None:
+        response_message.state.MergeFrom(state.to_proto())
     response = Response(mimetype="application/json")
     response.set_data(message_to_json(response_message))
     return response
@@ -2424,6 +2447,7 @@ HANDLERS = {
     GetRun: _get_run,
     SearchRuns: _search_runs,
     SearchStates: _search_states,
+    SearchStateByName: _search_state_by_name,
     ListArtifacts: _list_artifacts,
     GetMetricHistory: _get_metric_history,
     GetMetricHistoryBulkInterval: get_metric_history_bulk_interval_handler,

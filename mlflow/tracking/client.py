@@ -2377,6 +2377,15 @@ class MlflowClient:
         """
         return self._tracking_client.search_states(experiment_id=experiment_id)
 
+    def search_state_by_name(self, experiment_id, name):
+        """Search state by name.
+
+        Returns:
+            :py:class:`RunState <mlflow.entities.RunState>` object.
+
+        """
+        return self._tracking_client.search_state_by_name(experiment_id=experiment_id, name=name)
+
     # Registry API
 
     # Registered Model Methods

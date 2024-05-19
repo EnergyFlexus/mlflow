@@ -358,6 +358,8 @@ class FileStore(AbstractStore):
         if tags is not None:
             for tag in tags:
                 self.set_experiment_tag(experiment_id, tag)
+
+        self.create_default_states(experiment_id)
         return experiment_id
 
     def _validate_experiment_does_not_exist(self, name):
@@ -461,6 +463,10 @@ class FileStore(AbstractStore):
             data=dict(experiment),
         )
         mv(experiment_dir, self.trash_folder)
+        states = self.search_states(experiment_id)
+
+        for state in states:
+            self.delete_state(state.state_id)
 
     def _hard_delete_experiment(self, experiment_id):
         """
@@ -638,17 +644,45 @@ class FileStore(AbstractStore):
             tags.append(RunTag(key=MLFLOW_RUN_NAME, value=run_name))
         run_uuid = uuid.uuid4().hex
         artifact_uri = self._get_artifact_dir(experiment_id, run_uuid)
-        run_info = RunInfo(
-            run_uuid=run_uuid,
-            run_id=run_uuid,
-            run_name=run_name,
-            experiment_id=experiment_id,
-            artifact_uri=artifact_uri,
-            user_id=user_id,
-            status=RunStatus.to_string(RunStatus.RUNNING),
-            start_time=start_time,
-            end_time=None,
-        )
+
+        active_state = self.search_state_by_name(experiment_id, "Active")
+        actual_state = self.search_state_by_name(experiment_id, "Actual")
+
+        sets_state = active_state
+        if sets_state is None and actual_state is not None:
+            sets_state = actual_state
+
+        runs = self.search_runs([experiment_id], "", None)
+        runs_active = [run for run in runs if run.run_state_id == active_state.state_id]
+        for run_active in runs_active:
+            run_active.run_state_id = actual_state.state_id
+
+        if sets_state is not None:
+            run_info = RunInfo(
+                run_uuid=run_uuid,
+                run_id=run_uuid,
+                run_name=run_name,
+                experiment_id=experiment_id,
+                artifact_uri=artifact_uri,
+                user_id=user_id,
+                status=RunStatus.to_string(RunStatus.RUNNING),
+                start_time=start_time,
+                end_time=None,
+                run_state_id=sets_state.state_id,
+            )
+        else:
+            run_info = RunInfo(
+                run_uuid=run_uuid,
+                run_id=run_uuid,
+                run_name=run_name,
+                experiment_id=experiment_id,
+                artifact_uri=artifact_uri,
+                user_id=user_id,
+                status=RunStatus.to_string(RunStatus.RUNNING),
+                start_time=start_time,
+                end_time=None,
+            )
+
         # Persist run metadata and create directories for logging metrics, parameters, artifacts
         run_dir = self._get_run_dir(run_info.experiment_id, run_info.run_id)
         mkdir(run_dir)
@@ -748,16 +782,49 @@ class FileStore(AbstractStore):
         dict_run_state = dict(run_state)
 
         for s in states["states"]:
-            if s.name == run_state.name:
-                raise MlflowException(
-                    "State with this name is already exists.", databricks_pb2.INVALID_STATE
-                )
+            if s["name"] == run_state.name:
+                return s
 
         states["states"].append(dict_run_state)
         write_yaml(
             _default_root_dir(), FileStore.META_STATES_FILE_NAME, dict(states), overwrite=True
         )
         return run_state
+
+    def create_default_states(self, experiment_id):
+        """
+        Creates default states. Active, Actual, Deleted.
+        """
+
+        experiment = self.get_experiment(experiment_id)
+        if experiment is None:
+            raise MlflowException(
+                "Could not create state under experiment with ID %s - no such experiment "
+                "exists." % experiment_id,
+                databricks_pb2.RESOURCE_DOES_NOT_EXIST,
+            )
+        if experiment.lifecycle_stage != LifecycleStage.ACTIVE:
+            raise MlflowException(
+                f"Could not create run under non-active experiment with ID {experiment_id}.",
+                databricks_pb2.INVALID_STATE,
+            )
+
+        name_active = "Active"
+        name_actual = "Actual"
+        name_deleted = "Deleted"
+
+        state_active = self.search_state_by_name(experiment_id=experiment_id, name=name_active)
+        state_actual = self.search_state_by_name(experiment_id=experiment_id, name=name_actual)
+        state_deleted = self.search_state_by_name(experiment_id=experiment_id, name=name_deleted)
+
+        if state_active is None:
+            self.create_state(experiment_id, name_active)
+        if state_actual is None:
+            self.create_state(experiment_id, name_actual)
+        if state_deleted is None:
+            self.create_state(experiment_id, name_deleted)
+
+        return
 
     def get_state(self, state_id):
         """
@@ -1077,6 +1144,8 @@ class FileStore(AbstractStore):
             return []
 
         states_dict = read_yaml(_default_root_dir(), FileStore.META_STATES_FILE_NAME)
+        if states_dict is None:
+            return []
 
         states_all = states_dict["states"]
         return [
@@ -1084,6 +1153,14 @@ class FileStore(AbstractStore):
             for state in states_all
             if state["experiment_id"] == experiment_id
         ]
+
+    def search_state_by_name(self, experiment_id, name):
+        states = self.search_states(experiment_id)
+        for state in states:
+            if state.name == name:
+                return state
+
+        return None
 
     def log_metric(self, run_id, metric):
         _validate_run_id(run_id)
