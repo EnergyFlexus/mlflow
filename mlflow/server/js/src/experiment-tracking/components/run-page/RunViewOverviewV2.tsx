@@ -1,6 +1,6 @@
 import { FormattedMessage } from 'react-intl';
 import { useSelector } from 'react-redux';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { Button, FileIcon, Typography, useDesignSystemTheme } from '@databricks/design-system';
 
@@ -21,6 +21,7 @@ import { RunViewMetadataRow } from './overview/RunViewMetadataRow';
 import { RunViewRegisteredModelsBox } from './overview/RunViewRegisteredModelsBox';
 import { RunViewLoggedModelsBox } from './overview/RunViewLoggedModelsBox';
 import { RunViewSourceBox } from './overview/RunViewSourceBox';
+import { HTTPMethods, fetchEndpoint } from 'common/utils/FetchUtils';
 
 const EmptyValue = () => <Typography.Hint>—</Typography.Hint>;
 
@@ -33,7 +34,6 @@ export const RunViewOverviewV2 = ({
 }) => {
   const { theme } = useDesignSystemTheme();
   const { search } = useLocation();
-
   const { tags, runInfo, datasets, params, registeredModels, latestMetrics } = useSelector(
     ({ entities }: ReduxState) => ({
       tags: entities.tagsByRunUuid[runUuid],
@@ -44,6 +44,24 @@ export const RunViewOverviewV2 = ({
       registeredModels: entities.modelVersionsByRunUuid[runUuid],
     }),
   );
+
+  const [state, setState] = useState(runInfo.run_state_id);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      fetchEndpoint({
+        relativeUrl: `ajax-api/2.0/mlflow/states/get?state_id=${runInfo.run_state_id}`,
+        method: HTTPMethods.GET,
+        success: async ({ resolve, response }: any) => {
+          const json = await response.json();
+          const name = json?.state.name;
+          setState(name);
+          resolve();
+        },
+      })
+    };
+    fetchData();
+  }, [setState, runInfo.run_state_id]);
 
   const loggedModels = useMemo(() => Utils.getLoggedModelsFromTags(tags), [tags]);
   const parentRunIdTag = tags[EXPERIMENT_PARENT_ID_TAG];
@@ -84,6 +102,12 @@ export const RunViewOverviewV2 = ({
               />
             }
             value={<RunViewUserLinkBox runInfo={runInfo} tags={tags} />}
+          />
+          <RunViewMetadataRow
+            title={
+              <FormattedMessage defaultMessage="State" description="Run page > Overview > Run author section state" />
+            }
+            value={state}
           />
           <RunViewMetadataRow
             title={

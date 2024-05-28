@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Theme } from '@emotion/react';
 import { Button, NewWindowIcon, InfoTooltip, Typography, useDesignSystemTheme } from '@databricks/design-system';
 import { FormattedMessage } from 'react-intl';
@@ -15,6 +15,8 @@ import { ExperimentViewCopyArtifactLocation } from './ExperimentViewCopyArtifact
 import { Tooltip } from '@databricks/design-system';
 import { InfoIcon } from '@databricks/design-system';
 import { Popover } from '@databricks/design-system';
+import { SimpleChangingModal } from './SimpleChangingModal/SimpleChangingModal';
+import { HTTPMethods, fetchEndpoint } from 'common/utils/FetchUtils';
 
 /**
  * Header for a single experiment page. Displays title, breadcrumbs and provides
@@ -147,7 +149,7 @@ export const ExperimentViewHeaderV2 = React.memo(
     };
 
     const HEADER_MAX_WIDTH = '70%';
-
+    const [isAddStateModal, setIsAddStateModal] = useState<boolean>(false);
     return (
       <PageHeader
         title={
@@ -173,7 +175,39 @@ export const ExperimentViewHeaderV2 = React.memo(
         breadcrumbs={breadcrumbs}
         spacerSize="sm"
       >
+        <SimpleChangingModal
+          isOpen={isAddStateModal}
+          title={'Add State'}
+          inputName={'state'}
+          rulesMessage={'state'}
+          inputLabel={'State'}
+          placeholder={'new state name'}
+          onClose={() => {
+            setIsAddStateModal(false);
+          }}
+          onSubmit={async (value: string) => {
+            fetchEndpoint({
+              relativeUrl: 'ajax-api/2.0/mlflow/states/create',
+              method: HTTPMethods.POST,
+              body: JSON.stringify({
+                experiment_id: experiment.experiment_id,
+                name: value
+              }),
+              success: async ({ resolve, response }: any) => {
+                window.location.reload()
+              },
+            });
+          }}
+        />
         {getShareButton()}
+        <Button
+          componentId="codegen_mlflow_app_src_experiment-tracking_components_experiment-page_components_header_experimentviewheadersharebutton.tsx_4452"
+          type="primary"
+          onClick={() => setIsAddStateModal(true)}
+          data-test-id="add-button"
+        >
+          Add State
+        </Button>
       </PageHeader>
     );
   },

@@ -2,7 +2,6 @@ import {
   ExperimentEntity,
   ExperimentStoreEntities,
   KeyValueEntity,
-  LIFECYCLE_FILTER,
   ModelVersionInfoEntity,
   MODEL_VERSION_FILTER,
   DatasetSummary,

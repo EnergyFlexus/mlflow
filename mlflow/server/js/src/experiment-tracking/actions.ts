@@ -11,7 +11,6 @@ import { MlflowService } from './sdk/MlflowService';
 import { getUUID } from '../common/utils/ActionUtils';
 import { ErrorCodes } from '../common/constants';
 import { isArray, isObject } from 'lodash';
-import { ViewType } from './sdk/MlflowEnums';
 import { fetchEndpoint, jsonBigIntResponseParser } from '../common/utils/FetchUtils';
 import { stringify as queryStringStringify } from 'qs';
 import { fetchEvaluationTableArtifact } from './sdk/EvaluationArtifactService';
@@ -302,7 +301,7 @@ export const searchRunsPayload = ({
       MlflowService.searchRuns({
         experiment_ids: experimentIds,
         filter: createPinnedRowsExpression(runsPinned),
-        run_view_type: ViewType.ALL,
+        run_view_type: 'All',
       }),
     );
   }

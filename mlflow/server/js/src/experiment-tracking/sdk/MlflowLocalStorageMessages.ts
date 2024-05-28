@@ -21,8 +21,8 @@ import {
   DEFAULT_ORDER_BY_KEY,
   DEFAULT_ORDER_BY_ASC,
   DEFAULT_START_TIME,
-  DEFAULT_LIFECYCLE_FILTER,
   DEFAULT_MODEL_VERSION_FILTER,
+  DEFAULT_STATE_FILTER,
 } from '../constants';
 
 /**
@@ -41,7 +41,7 @@ export const ExperimentPagePersistedState = Immutable.Record(
     // Filter key to show results based on start time
     startTime: DEFAULT_START_TIME,
     // Lifecycle filter of runs to display
-    lifecycleFilter: DEFAULT_LIFECYCLE_FILTER,
+    stateFilter: DEFAULT_STATE_FILTER,
     // Filter of model versions to display
     modelVersionFilter: DEFAULT_MODEL_VERSION_FILTER,
     // Unchecked keys in the columns dropdown

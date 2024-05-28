@@ -15,7 +15,7 @@ export const EXPERIMENT_PAGE_QUERY_PARAM_KEYS = [
   'orderByKey',
   'orderByAsc',
   'startTime',
-  'lifecycleFilter',
+  'stateFilter',
   'modelVersionFilter',
   'datasetsFilter',
 ];
@@ -44,7 +44,7 @@ export const useExperimentPageSearchFacets = (): [ExperimentQueryParamsSearchFac
   );
 
   // Destructure to get raw values
-  const { searchFilter, orderByKey, orderByAsc, startTime, lifecycleFilter, modelVersionFilter, datasetsFilter } =
+  const { searchFilter, orderByKey, orderByAsc, startTime, stateFilter, modelVersionFilter, datasetsFilter } =
     pickedValues;
 
   const areValuesEmpty = keys(pickedValues).length < 1;
@@ -75,7 +75,7 @@ export const useExperimentPageSearchFacets = (): [ExperimentQueryParamsSearchFac
           orderByKey,
           orderByAsc,
           startTime,
-          lifecycleFilter,
+          stateFilter,
           modelVersionFilter,
           datasetsFilter,
         },
@@ -91,7 +91,7 @@ export const useExperimentPageSearchFacets = (): [ExperimentQueryParamsSearchFac
     orderByKey,
     orderByAsc,
     startTime,
-    lifecycleFilter,
+    stateFilter,
     modelVersionFilter,
     datasetsFilter,
     areValuesEmpty,

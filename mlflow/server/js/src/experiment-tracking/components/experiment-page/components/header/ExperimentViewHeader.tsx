@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Theme } from '@emotion/react';
 import { Button, NewWindowIcon } from '@databricks/design-system';
 import { FormattedMessage } from 'react-intl';
@@ -32,7 +32,6 @@ export const ExperimentViewHeader = React.memo(
      * Extract the last part of the experiment name
      */
     const normalizedExperimentName = useMemo(() => experiment.name.split('/').pop(), [experiment.name]);
-
     const feedbackFormUrl = useExperimentPageFeedbackUrl();
 
     const renderFeedbackForm = () => {

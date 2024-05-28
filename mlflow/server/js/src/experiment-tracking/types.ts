@@ -82,6 +82,7 @@ export interface RunInfoEntity {
   run_name: string;
   start_time: number;
   status: 'SCHEDULED' | 'FAILED' | 'FINISHED' | 'RUNNING' | 'KILLED';
+  run_state_id: string;
 
   getArtifactUri(): string;
   getEndTime(): string;
@@ -251,10 +252,6 @@ export interface ExperimentStoreEntities {
   artifactRootUriByRunUuid: Record<string, string>;
 }
 
-export enum LIFECYCLE_FILTER {
-  ACTIVE = 'Active',
-  DELETED = 'Deleted',
-}
 
 export enum MODEL_VERSION_FILTER {
   WITH_MODEL_VERSIONS = 'With Model Versions',

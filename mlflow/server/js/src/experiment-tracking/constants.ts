@@ -39,11 +39,6 @@ export const COLUMN_SORT_BY_ASC = 'ASCENDING';
 export const COLUMN_SORT_BY_DESC = 'DESCENDING';
 export const SORT_DELIMITER_SYMBOL = '***';
 
-export enum LIFECYCLE_FILTER {
-  ACTIVE = 'Active',
-  DELETED = 'Deleted',
-}
-
 export enum MODEL_VERSION_FILTER {
   WITH_MODEL_VERSIONS = 'With Model Versions',
   WTIHOUT_MODEL_VERSIONS = 'Without Model Versions',
@@ -61,7 +56,7 @@ export const DEFAULT_CATEGORIZED_UNCHECKED_KEYS = {
   [COLUMN_TYPES.TAGS]: [],
 };
 export const DEFAULT_DIFF_SWITCH_SELECTED = false;
-export const DEFAULT_LIFECYCLE_FILTER = LIFECYCLE_FILTER.ACTIVE;
+export const DEFAULT_STATE_FILTER = 'All';
 export const DEFAULT_MODEL_VERSION_FILTER = MODEL_VERSION_FILTER.ALL_RUNS;
 
 export const PAGINATION_DEFAULT_STATE = {

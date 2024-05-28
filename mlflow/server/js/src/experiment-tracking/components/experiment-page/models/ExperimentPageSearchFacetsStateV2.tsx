@@ -1,11 +1,11 @@
 import {
-  DEFAULT_LIFECYCLE_FILTER,
   DEFAULT_MODEL_VERSION_FILTER,
   DEFAULT_ORDER_BY_ASC,
   DEFAULT_ORDER_BY_KEY,
   DEFAULT_START_TIME,
+  DEFAULT_STATE_FILTER,
 } from '../../../constants';
-import type { DatasetSummary, LIFECYCLE_FILTER, MODEL_VERSION_FILTER } from '../../../types';
+import type { DatasetSummary, MODEL_VERSION_FILTER } from '../../../types';
 
 /**
  * Defines persistable model representing sort and filter values
@@ -34,9 +34,9 @@ export interface ExperimentPageSearchFacetsStateV2 {
   startTime: string;
 
   /**
-   * Lifecycle filter of runs to display
+   * State filter of runs to display
    */
-  lifecycleFilter: LIFECYCLE_FILTER;
+  stateFilter: string;
 
   /**
    * Datasets filter of runs to display
@@ -57,7 +57,7 @@ export const createExperimentPageSearchFacetsStateV2 = (): ExperimentPageSearchF
   orderByKey: DEFAULT_ORDER_BY_KEY,
   orderByAsc: DEFAULT_ORDER_BY_ASC,
   startTime: DEFAULT_START_TIME,
-  lifecycleFilter: DEFAULT_LIFECYCLE_FILTER,
+  stateFilter: DEFAULT_STATE_FILTER,
   datasetsFilter: [],
   modelVersionFilter: DEFAULT_MODEL_VERSION_FILTER,
 });

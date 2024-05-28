@@ -5,7 +5,6 @@ import {
   DatasetSummary,
   ExperimentEntity,
   ExperimentStoreEntities,
-  LIFECYCLE_FILTER,
   MODEL_VERSION_FILTER,
   RunDatasetWithTags,
   UpdateExperimentViewStateFn,
@@ -50,7 +49,7 @@ export interface ExperimentViewRunsOwnProps {
   isLoading: boolean;
   experiments: ExperimentEntity[];
   modelVersionFilter?: MODEL_VERSION_FILTER;
-  lifecycleFilter?: LIFECYCLE_FILTER;
+  stateFilter?: string;
   datasetsFilter?: DatasetSummary[];
   onMaximizedChange?: (newIsMaximized: boolean) => void;
 
@@ -468,7 +467,7 @@ export const ExperimentViewRunsInjectFilters = (props: ExperimentViewRunsProps) 
     <ExperimentViewRunsConnect
       {...props}
       modelVersionFilter={searchFacetsState.modelVersionFilter}
-      lifecycleFilter={searchFacetsState.lifecycleFilter}
+      stateFilter={searchFacetsState.stateFilter}
       datasetsFilter={searchFacetsState.datasetsFilter}
     />
   );

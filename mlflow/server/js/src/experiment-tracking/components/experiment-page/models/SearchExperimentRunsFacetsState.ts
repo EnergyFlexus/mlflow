@@ -1,11 +1,11 @@
 import {
   ATTRIBUTE_COLUMN_LABELS,
   COLUMN_TYPES,
-  DEFAULT_LIFECYCLE_FILTER,
   DEFAULT_MODEL_VERSION_FILTER,
   DEFAULT_ORDER_BY_ASC,
   DEFAULT_ORDER_BY_KEY,
   DEFAULT_START_TIME,
+  DEFAULT_STATE_FILTER,
 } from '../../../constants';
 import { SerializedRunsChartsCardConfigCard } from '../../runs-charts/runs-charts.types';
 import { makeCanonicalSortKey } from '../utils/experimentPage.common-utils';
@@ -28,11 +28,11 @@ const getDefaultSelectedColumns = () => {
  * selected columns, chart state etc.
  */
 export const clearSearchExperimentsFacetsFilters = (currentSearchFacetsState: SearchExperimentRunsFacetsState) => {
-  const { lifecycleFilter, datasetsFilter, modelVersionFilter, searchFilter, startTime, orderByAsc, orderByKey } =
+  const { stateFilter, datasetsFilter, modelVersionFilter, searchFilter, startTime, orderByAsc, orderByKey } =
     new SearchExperimentRunsFacetsState();
   return {
     ...currentSearchFacetsState,
-    lifecycleFilter,
+    stateFilter,
     datasetsFilter,
     modelVersionFilter,
     searchFilter,
@@ -48,9 +48,9 @@ export const clearSearchExperimentsFacetsFilters = (currentSearchFacetsState: Se
  * are currently filtered.
  */
 export const isSearchFacetsFilterUsed = (currentSearchFacetsState: SearchExperimentRunsFacetsState) => {
-  const { lifecycleFilter, modelVersionFilter, datasetsFilter, searchFilter, startTime } = currentSearchFacetsState;
+  const { stateFilter, modelVersionFilter, datasetsFilter, searchFilter, startTime } = currentSearchFacetsState;
   return Boolean(
-    lifecycleFilter !== DEFAULT_LIFECYCLE_FILTER ||
+    stateFilter !== DEFAULT_STATE_FILTER ||
       modelVersionFilter !== DEFAULT_MODEL_VERSION_FILTER ||
       datasetsFilter.length !== 0 ||
       searchFilter ||
@@ -87,7 +87,7 @@ export class SearchExperimentRunsFacetsState {
   /**
    * Lifecycle filter of runs to display
    */
-  lifecycleFilter = DEFAULT_LIFECYCLE_FILTER;
+  stateFilter = DEFAULT_STATE_FILTER;
 
   /**
    * Datasets filter of runs to display

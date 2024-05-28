@@ -4,7 +4,7 @@ import React, { useCallback, useState } from 'react';
 import { FormattedMessage } from 'react-intl';
 import { useNavigate } from '../../../../../common/utils/RoutingUtils';
 import { Tooltip } from '@databricks/design-system';
-import { COLUMN_SORT_BY_ASC, LIFECYCLE_FILTER, SORT_DELIMITER_SYMBOL } from '../../../../constants';
+import { COLUMN_SORT_BY_ASC, SORT_DELIMITER_SYMBOL } from '../../../../constants';
 import Routes from '../../../../routes';
 import { UpdateExperimentSearchFacetsFn, UpdateExperimentViewStateFn } from '../../../../types';
 import { SearchExperimentRunsFacetsState } from '../../models/SearchExperimentRunsFacetsState';
@@ -31,7 +31,7 @@ export const ExperimentViewRunsControlsActions = React.memo(
   ({ viewState, runsData, searchFacetsState, refreshRuns }: ExperimentViewRunsControlsActionsProps) => {
     const { runsSelected } = viewState;
     const { runInfos } = runsData;
-    const { lifecycleFilter } = searchFacetsState;
+    const { stateFilter } = searchFacetsState;
 
     const navigate = useNavigate();
 
@@ -73,7 +73,7 @@ export const ExperimentViewRunsControlsActions = React.memo(
     return (
       <>
         <div css={styles.controlBar}>
-          <Button
+          {/* <Button
             componentId="codegen_mlflow_app_src_experiment-tracking_components_experiment-page_components_runs_experimentviewrunscontrolsactions.tsx_110"
             data-testid="run-rename-button"
             onClick={renameButtonClicked}
@@ -112,7 +112,7 @@ export const ExperimentViewRunsControlsActions = React.memo(
                 description="String for the restore button to undo the experiments that were deleted"
               />
             </Button>
-          ) : null}
+          ) : null} */}
           <div css={styles.buttonSeparator} />
           <CompareRunsButtonWrapper>
             <Button

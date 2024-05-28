@@ -26,12 +26,11 @@ import {
   shouldEnablePromptLab,
   shouldEnableShareExperimentViewByTags,
 } from 'common/utils/FeatureUtils';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { FormattedMessage, useIntl } from 'react-intl';
 import { ToggleIconButton } from '../../../../../common/components/ToggleIconButton';
 import { ErrorWrapper } from '../../../../../common/utils/ErrorWrapper';
-import { LIFECYCLE_FILTER } from '../../../../constants';
 import { UpdateExperimentSearchFacetsFn, UpdateExperimentViewStateFn } from '../../../../types';
 import { useExperimentIds } from '../../hooks/useExperimentIds';
 import {
@@ -52,6 +51,7 @@ import { useExperimentPageViewMode } from '../../hooks/useExperimentPageViewMode
 import { useUpdateExperimentPageSearchFacets } from '../../hooks/useExperimentPageSearchFacets';
 import { createExperimentPageSearchFacetsStateV2 } from '../../models/ExperimentPageSearchFacetsStateV2';
 import { useUpdateExperimentViewUIState } from '../../contexts/ExperimentPageUIStateContext';
+import { HTTPMethods, fetchEndpoint } from 'common/utils/FetchUtils';
 
 export type ExperimentViewRunsControlsFiltersProps = {
   searchFacetsState: SearchExperimentRunsFacetsState;
@@ -66,6 +66,12 @@ export type ExperimentViewRunsControlsFiltersProps = {
   refreshRuns: () => void;
   viewMaximized: boolean;
 };
+
+interface RunState {
+  experiment_id: string;
+  state_id: string;
+  name: string;
+}
 
 export const ExperimentViewRunsControlsFilters = React.memo(
   ({
@@ -88,7 +94,34 @@ export const ExperimentViewRunsControlsFilters = React.memo(
     const updateUIState = useUpdateExperimentViewUIState();
 
     const isComparingExperiments = useExperimentIds().length > 1;
-    const { startTime, lifecycleFilter, datasetsFilter, searchFilter } = searchFacetsState;
+    const { startTime, stateFilter, datasetsFilter, searchFilter } = searchFacetsState;
+    const [states, setStates] = useState<RunState[]>([]);
+
+    useEffect(() => {
+      const fetchData = async () => {
+        fetchEndpoint({
+          relativeUrl: `ajax-api/2.0/mlflow/states/search`,
+          method: HTTPMethods.POST,
+          body: JSON.stringify({
+            experiment_id: experimentId,
+          }),
+          success: async ({ resolve, response }: any) => {
+            const json = await response.json();
+            const states = json.states as RunState[];
+            setStates([
+              {
+                experiment_id: experimentId,
+                state_id: '',
+                name: 'All',
+              },
+              ...states,
+            ]);
+            resolve();
+          },
+        });
+      };
+      fetchData();
+    }, [setStates, experimentId]);
 
     // Use modernized view mode value getter if flag is set
     const compareRunsMode = usingNewViewStateModel ? pageViewMode : searchFacetsState.compareRunsMode;
@@ -100,17 +133,6 @@ export const ExperimentViewRunsControlsFilters = React.memo(
 
     // List of labels for "start time" filter
     const startTimeColumnLabels: Record<string, string> = useMemo(() => getStartTimeColumnDisplayName(intl), [intl]);
-
-    const currentLifecycleFilterValue =
-      lifecycleFilter === LIFECYCLE_FILTER.ACTIVE
-        ? intl.formatMessage({
-            defaultMessage: 'Active',
-            description: 'Linked model dropdown option to show active experiment runs',
-          })
-        : intl.formatMessage({
-            defaultMessage: 'Deleted',
-            description: 'Linked model dropdown option to show deleted experiment runs',
-          });
 
     const currentStartTimeFilterLabel = intl.formatMessage({
       defaultMessage: 'Time created',
@@ -217,49 +239,57 @@ export const ExperimentViewRunsControlsFilters = React.memo(
               defaultMessage: 'State',
               description: 'Filtering label to filter experiments based on state of active or deleted',
             })}
-            value={[currentLifecycleFilterValue]}
+            value={[stateFilter]}
           >
             <DialogComboboxTrigger allowClear={false} data-testid="lifecycle-filter" />
             <DialogComboboxContent>
               <DialogComboboxOptionList>
-                <DialogComboboxOptionListSelectItem
-                  checked={lifecycleFilter === LIFECYCLE_FILTER.ACTIVE}
-                  key={LIFECYCLE_FILTER.ACTIVE}
-                  data-testid="active-runs-menu-item"
-                  value={LIFECYCLE_FILTER.ACTIVE}
-                  onChange={() => {
-                    if (usingNewViewStateModel) {
-                      // In the new view state version, set lifecycle filter directly in the URL search state
-                      setUrlSearchFacets({ lifecycleFilter: LIFECYCLE_FILTER.ACTIVE });
-                    } else {
-                      updateSearchFacets({ lifecycleFilter: LIFECYCLE_FILTER.ACTIVE });
-                    }
-                  }}
-                >
-                  <FormattedMessage
-                    defaultMessage="Active"
-                    description="Linked model dropdown option to show active experiment runs"
-                  />
-                </DialogComboboxOptionListSelectItem>
-                <DialogComboboxOptionListSelectItem
-                  checked={lifecycleFilter === LIFECYCLE_FILTER.DELETED}
-                  key={LIFECYCLE_FILTER.DELETED}
-                  data-testid="deleted-runs-menu-item"
-                  value={LIFECYCLE_FILTER.DELETED}
-                  onChange={() => {
-                    if (usingNewViewStateModel) {
-                      // In the new view state version, set lifecycle filter directly in the URL search state
-                      setUrlSearchFacets({ lifecycleFilter: LIFECYCLE_FILTER.DELETED });
-                    } else {
-                      updateSearchFacets({ lifecycleFilter: LIFECYCLE_FILTER.DELETED });
-                    }
-                  }}
-                >
-                  <FormattedMessage
-                    defaultMessage="Deleted"
-                    description="Linked model dropdown option to show deleted experiment runs"
-                  />
-                </DialogComboboxOptionListSelectItem>
+                {states.map((state) => {
+                  return (
+                    <DialogComboboxOptionListSelectItem
+                      checked={stateFilter === state.name}
+                      key={state.name}
+                      data-testid="active-runs-menu-item"
+                      value={state.name}
+                      onChange={() => {
+                        if (usingNewViewStateModel) {
+                          // In the new view state version, set lifecycle filter directly in the URL search state
+                          setUrlSearchFacets({ stateFilter: state.name });
+                        } else {
+                          updateSearchFacets({ stateFilter: state.name });
+                        }
+                      }}
+                    >
+                      <div css={{ display: 'flex', flexDirection: 'row', width: '200px', alignItems: 'center' }}>
+                        <span>{state.name}</span>
+                        {state.state_id !== '' && (
+                          <Button
+                            size="small"
+                            css={{ marginLeft: 'auto' }}
+                            componentId={'codegen_mlflow_app_src_common_components_editablenote.tsx_5252'}
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              fetchEndpoint({
+                                relativeUrl: 'ajax-api/2.0/mlflow/states/delete',
+                                method: HTTPMethods.POST,
+                                body: JSON.stringify({
+                                  state_id: state.state_id
+                                }),
+                                success: async ({ resolve, response }: any) => {
+                                  setStates(states.filter((_state) => {
+                                    return state.state_id !== _state.state_id
+                                  }))
+                                },
+                              });
+                            }}
+                          >
+                            Delete
+                          </Button>
+                        )}
+                      </div>
+                    </DialogComboboxOptionListSelectItem>
+                  );
+                })}
               </DialogComboboxOptionList>
             </DialogComboboxContent>
           </DialogCombobox>

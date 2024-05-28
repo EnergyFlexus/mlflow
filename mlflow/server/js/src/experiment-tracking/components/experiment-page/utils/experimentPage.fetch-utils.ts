@@ -3,8 +3,7 @@ import { AnyAction } from 'redux';
 import { searchModelVersionsApi } from '../../../../model-registry/actions';
 import { MAX_RUNS_IN_SEARCH_MODEL_VERSIONS_FILTER } from '../../../../model-registry/constants';
 import { ATTRIBUTE_COLUMN_SORT_KEY } from '../../../constants';
-import { ViewType } from '../../../sdk/MlflowEnums';
-import { KeyValueEntity, LIFECYCLE_FILTER } from '../../../types';
+import { KeyValueEntity } from '../../../types';
 import { SearchExperimentRunsFacetsState } from '../models/SearchExperimentRunsFacetsState';
 import { EXPERIMENT_LOG_MODEL_HISTORY_TAG } from './experimentPage.common-utils';
 import { ThunkDispatch } from '../../../../redux-types';
@@ -32,7 +31,7 @@ export const shouldRefetchRuns = (
   !isEqual(currentSearchFacetsState.searchFilter, newSearchFacetsState.searchFilter) ||
   !isEqual(currentSearchFacetsState.orderByAsc, newSearchFacetsState.orderByAsc) ||
   !isEqual(currentSearchFacetsState.orderByKey, newSearchFacetsState.orderByKey) ||
-  !isEqual(currentSearchFacetsState.lifecycleFilter, newSearchFacetsState.lifecycleFilter) ||
+  !isEqual(currentSearchFacetsState.stateFilter, newSearchFacetsState.stateFilter) ||
   !isEqual(currentSearchFacetsState.startTime, newSearchFacetsState.startTime) ||
   !isEqual(currentSearchFacetsState.datasetsFilter, newSearchFacetsState.datasetsFilter);
 
@@ -112,8 +111,7 @@ export const createSearchRunsParams = (
   referenceTime: number,
   pageToken?: string,
 ) => {
-  const runViewType =
-    searchFacetsState.lifecycleFilter === LIFECYCLE_FILTER.ACTIVE ? ViewType.ACTIVE_ONLY : ViewType.DELETED_ONLY;
+  const runViewType = searchFacetsState.stateFilter;
 
   const { runsPinned = undefined } = searchFacetsState;
 
