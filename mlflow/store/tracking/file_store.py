@@ -783,7 +783,7 @@ class FileStore(AbstractStore):
 
         for s in states["states"]:
             if s["name"] == run_state.name:
-                return s
+                return run_state
 
         states["states"].append(dict_run_state)
         write_yaml(
