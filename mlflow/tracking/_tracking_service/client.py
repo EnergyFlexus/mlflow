@@ -695,7 +695,7 @@ class TrackingServiceClient:
         self,
         experiment_ids,
         filter_string="",
-        run_view_type=ViewType.ACTIVE_ONLY,
+        run_view_type="All",
         max_results=SEARCH_MAX_RESULTS_DEFAULT,
         order_by=None,
         page_token=None,

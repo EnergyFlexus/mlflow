@@ -574,7 +574,7 @@ def gc(older_than, backend_store_uri, run_ids, experiment_ids):
             page = backend_store.search_runs(
                 experiment_ids=experiment_ids,
                 filter_string="",
-                run_view_type=ViewType.DELETED_ONLY,
+                run_view_type="Deleted",
                 page_token=token,
             )
             return (page + fetch_runs(page.token)) if page.token else page

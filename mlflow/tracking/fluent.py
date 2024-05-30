@@ -1848,7 +1848,7 @@ def get_artifact_uri(artifact_path: Optional[str] = None) -> str:
 def search_runs(
     experiment_ids: Optional[List[str]] = None,
     filter_string: str = "",
-    run_view_type: int = ViewType.ACTIVE_ONLY,
+    run_view_type: str = "All",
     max_results: int = SEARCH_MAX_RESULTS_PANDAS,
     order_by: Optional[List[str]] = None,
     output_format: str = "pandas",

@@ -5,7 +5,6 @@ import json
 
 import click
 
-from mlflow.entities import ViewType
 from mlflow.environment_variables import MLFLOW_EXPERIMENT_ID
 from mlflow.tracking import _get_store
 from mlflow.utils.string_utils import _create_table
@@ -42,7 +41,7 @@ def list_run(experiment_id, view):
     List all runs of the specified experiment in the configured tracking server.
     """
     store = _get_store()
-    view_type = ViewType.from_string(view) if view else ViewType.ACTIVE_ONLY
+    view_type = view if view else "All"
     runs = store.search_runs([experiment_id], None, view_type)
     table = []
     for run in runs:

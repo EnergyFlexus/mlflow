@@ -28,7 +28,6 @@ from mlflow.entities import (
     _DatasetSummary,
 )
 from mlflow.entities.lifecycle_stage import LifecycleStage
-from mlflow.entities.run_info import check_run_is_active
 from mlflow.environment_variables import MLFLOW_TRACKING_DIR
 from mlflow.exceptions import MissingConfigException, MlflowException
 from mlflow.protos import databricks_pb2
@@ -319,6 +318,13 @@ class FileStore(AbstractStore):
         )
         return PagedList(experiments, next_page_token)
 
+    def check_run_is_active(self, run_info):
+        if self.get_state(run_info.run_state_id).name == "Deleted":
+            raise MlflowException(
+                f"The run {run_info.run_id} must be not 'Deleted'.",
+                error_code=INVALID_PARAMETER_VALUE,
+            )
+
     def get_experiment_by_name(self, experiment_name):
         def pagination_wrapper_func(number_to_get, next_page_token):
             return self.search_experiments(
@@ -561,7 +567,7 @@ class FileStore(AbstractStore):
         current_time = get_current_time_millis()
         experiment_ids = self._get_active_experiments() + self._get_deleted_experiments()
         deleted_runs = self.search_runs(
-            experiment_ids=experiment_ids, filter_string="", run_view_type=ViewType.DELETED_ONLY
+            experiment_ids=experiment_ids, filter_string="", run_view_type="Deleted"
         )
         deleted_run_ids = []
         for deleted_run in deleted_runs:
@@ -605,7 +611,7 @@ class FileStore(AbstractStore):
     def update_run_info(self, run_id, run_status, end_time, run_name, state_id=None):
         _validate_run_id(run_id)
         run_info = self._get_run_info(run_id)
-        check_run_is_active(run_info)
+        self.check_run_is_active(run_info)
         new_info = run_info._copy_with_overrides(
             run_status, end_time, run_name=run_name, run_state_id=state_id
         )
@@ -652,10 +658,10 @@ class FileStore(AbstractStore):
         if sets_state is None and actual_state is not None:
             sets_state = actual_state
 
-        runs = self.search_runs([experiment_id], "", None)
+        runs = self.search_runs([experiment_id], "", "All")
         runs_active = [run for run in runs if run.info.run_state_id == active_state.state_id]
         for run_active in runs_active:
-            run_active.info.run_state_id = actual_state.state_id
+            run_active.info._copy_with_overrides(run_state_id=actual_state.state_id)
 
         if sets_state is not None:
             run_info = RunInfo(
@@ -1107,8 +1113,8 @@ class FileStore(AbstractStore):
                     )
                     continue
                 # TODO states match!
-                # if LifecycleStage.matches_view_type(view_type, run_info.lifecycle_stage):
-                run_infos.append(run_info)
+                if view_type == "All" or self.get_state(run_info.run_state_id).name == view_type:
+                    run_infos.append(run_info)
             except MissingConfigException as rnfe:
                 # trap malformed run exception and log warning
                 r_id = os.path.basename(r_dir)
@@ -1166,7 +1172,7 @@ class FileStore(AbstractStore):
         _validate_run_id(run_id)
         _validate_metric(metric.key, metric.value, metric.timestamp, metric.step)
         run_info = self._get_run_info(run_id)
-        check_run_is_active(run_info)
+        self.check_run_is_active(run_info)
         self._log_run_metric(run_info, metric)
 
     def _log_run_metric(self, run_info, metric):
@@ -1186,7 +1192,7 @@ class FileStore(AbstractStore):
         _validate_run_id(run_id)
         param = _validate_param(param.key, param.value)
         run_info = self._get_run_info(run_id)
-        check_run_is_active(run_info)
+        self.check_run_is_active(run_info)
         self._log_run_param(run_info, param)
 
     def _log_run_param(self, run_info, param):
@@ -1244,7 +1250,7 @@ class FileStore(AbstractStore):
         _validate_run_id(run_id)
         _validate_tag_name(tag.key)
         run_info = self._get_run_info(run_id)
-        check_run_is_active(run_info)
+        self.check_run_is_active(run_info)
         self._set_run_tag(run_info, tag)
         if tag.key == MLFLOW_RUN_NAME:
             run_status = RunStatus.from_string(run_info.status)
@@ -1266,7 +1272,7 @@ class FileStore(AbstractStore):
         """
         _validate_run_id(run_id)
         run_info = self._get_run_info(run_id)
-        check_run_is_active(run_info)
+        self.check_run_is_active(run_info)
         tag_path = self._get_tag_path(run_info.experiment_id, run_id, key)
         if not exists(tag_path):
             raise MlflowException(
@@ -1288,7 +1294,7 @@ class FileStore(AbstractStore):
         _validate_batch_log_limits(metrics, params, tags)
         _validate_param_keys_unique(params)
         run_info = self._get_run_info(run_id)
-        check_run_is_active(run_info)
+        self.check_run_is_active(run_info)
         try:
             for param in params:
                 self._log_run_param(run_info, param)
@@ -1313,7 +1319,7 @@ class FileStore(AbstractStore):
             )
         _validate_run_id(run_id)
         run_info = self._get_run_info(run_id)
-        check_run_is_active(run_info)
+        self.check_run_is_active(run_info)
         model_dict = mlflow_model.to_dict()
         run_info = self._get_run_info(run_id)
         path = self._get_tag_path(run_info.experiment_id, run_info.run_id, MLFLOW_LOGGED_MODELS)
@@ -1343,7 +1349,7 @@ class FileStore(AbstractStore):
         """
         _validate_run_id(run_id)
         run_info = self._get_run_info(run_id)
-        check_run_is_active(run_info)
+        self.check_run_is_active(run_info)
 
         if datasets is None:
             return

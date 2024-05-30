@@ -17,7 +17,7 @@ from flask import Response, current_app, jsonify, request, send_file
 from google.protobuf import descriptor
 from google.protobuf.json_format import ParseError
 
-from mlflow.entities import DatasetInput, ExperimentTag, FileInfo, Metric, Param, RunTag, ViewType
+from mlflow.entities import DatasetInput, ExperimentTag, FileInfo, Metric, Param, RunTag
 from mlflow.entities.model_registry import ModelVersionTag, RegisteredModelTag
 from mlflow.entities.multipart_upload import MultipartUploadPart
 from mlflow.environment_variables import MLFLOW_DEPLOYMENTS_TARGET
@@ -1012,9 +1012,9 @@ def _search_runs():
         },
     )
     response_message = SearchRuns.Response()
-    run_view_type = ViewType.ACTIVE_ONLY
+    run_view_type = "All"
     if request_message.HasField("run_view_type"):
-        run_view_type = ViewType.from_proto(request_message.run_view_type)
+        run_view_type = request_message.run_view_type
     filter_string = request_message.filter
     max_results = request_message.max_results
     experiment_ids = request_message.experiment_ids

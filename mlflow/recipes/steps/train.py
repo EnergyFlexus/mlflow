@@ -11,7 +11,7 @@ import cloudpickle
 import yaml
 
 import mlflow
-from mlflow.entities import SourceType, ViewType
+from mlflow.entities import SourceType
 from mlflow.environment_variables import MLFLOW_RECIPES_EXECUTION_TARGET_STEP_NAME
 from mlflow.exceptions import BAD_REQUEST, INVALID_PARAMETER_VALUE, MlflowException
 from mlflow.models import Model
@@ -715,7 +715,7 @@ class TrainStep(BaseStep):
         search_max_results = 100
         search_result = mlflow_client.search_runs(
             experiment_ids=exp_id,
-            run_view_type=ViewType.ACTIVE_ONLY,
+            run_view_type="All",
             max_results=search_max_results,
             order_by=[f"metrics.{self.primary_metric} {primary_metric_order}"],
         )

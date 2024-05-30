@@ -1104,7 +1104,7 @@ message SearchRuns {
 
   // Whether to display only active, only deleted, or all runs.
   // Defaults to only active runs.
-  optional ViewType run_view_type = 3 [default = ACTIVE_ONLY];
+  optional string run_view_type = 3 [default = "All"];
 
   // Maximum number of runs desired. If unspecified, defaults to 1000.
   // All servers are guaranteed to support a `max_results` threshold of at least 50,000

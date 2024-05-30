@@ -2,15 +2,6 @@ from mlflow.entities._mlflow_object import _MlflowObject
 from mlflow.protos.service_pb2 import RunState as ProtoRunState
 
 
-def check_run_is_active(run_info):
-    # if run_info.lifecycle_stage != LifecycleStage.ACTIVE:
-    #     raise MlflowException( TODO check state to active
-    #         f"The run {run_info.run_id} must be in 'active' lifecycle_stage.",
-    #         error_code=INVALID_PARAMETER_VALUE,
-    #     )
-    return
-
-
 class searchable_attribute(property):
     # Wrapper class over property to designate some of the properties as searchable
     # run attributes

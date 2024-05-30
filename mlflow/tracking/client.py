@@ -2279,7 +2279,7 @@ class MlflowClient:
         self,
         experiment_ids: List[str],
         filter_string: str = "",
-        run_view_type: int = ViewType.ACTIVE_ONLY,
+        run_view_type: str = "All",
         max_results: int = SEARCH_MAX_RESULTS_DEFAULT,
         order_by: Optional[List[str]] = None,
         page_token: Optional[str] = None,
