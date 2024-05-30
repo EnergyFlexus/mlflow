@@ -122,6 +122,12 @@ export interface MetricEntity {
 export type MetricEntitiesByName = Record<string, MetricEntity>;
 export type MetricHistoryByName = Record<string, MetricEntity[]>;
 
+export interface RunState {
+  experiment_id: string;
+  state_id: string;
+  name: string;
+}
+
 export interface ExperimentEntity {
   allowed_actions: string[];
   artifact_location: string;
@@ -251,7 +257,6 @@ export interface ExperimentStoreEntities {
    */
   artifactRootUriByRunUuid: Record<string, string>;
 }
-
 
 export enum MODEL_VERSION_FILTER {
   WITH_MODEL_VERSIONS = 'With Model Versions',

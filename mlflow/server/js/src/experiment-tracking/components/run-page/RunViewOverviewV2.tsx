@@ -22,6 +22,8 @@ import { RunViewRegisteredModelsBox } from './overview/RunViewRegisteredModelsBo
 import { RunViewLoggedModelsBox } from './overview/RunViewLoggedModelsBox';
 import { RunViewSourceBox } from './overview/RunViewSourceBox';
 import { HTTPMethods, fetchEndpoint } from 'common/utils/FetchUtils';
+import { RunState } from 'experiment-tracking/types';
+import { ChangeStateModal } from './ChangeStateModal/ChangeStateModal';
 
 const EmptyValue = () => <Typography.Hint>—</Typography.Hint>;
 
@@ -45,7 +47,26 @@ export const RunViewOverviewV2 = ({
     }),
   );
 
-  const [state, setState] = useState(runInfo.run_state_id);
+  const [states, setStates] = useState<RunState[]>([]);
+
+  useEffect(() => {
+    fetchEndpoint({
+      relativeUrl: `ajax-api/2.0/mlflow/states/search`,
+      method: HTTPMethods.POST,
+      body: JSON.stringify({
+        experiment_id: runInfo.experiment_id,
+      }),
+      success: async ({ resolve, response }: any) => {
+        const json = await response.json();
+        const states = json.states as RunState[];
+        setStates(states);
+        resolve();
+      },
+    });
+  }, [runInfo.experiment_id, setStates]);
+
+  const [state, setState] = useState(runInfo.run_state_id || '');
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -58,7 +79,7 @@ export const RunViewOverviewV2 = ({
           setState(name);
           resolve();
         },
-      })
+      });
     };
     fetchData();
   }, [setState, runInfo.run_state_id]);
@@ -68,6 +89,27 @@ export const RunViewOverviewV2 = ({
 
   return (
     <div css={{ flex: '1' }}>
+      <ChangeStateModal
+        isOpen={isModalOpen}
+        states={states}
+        currState={{ state_id: runInfo.run_state_id, name: state, experiment_id: runInfo.experiment_id }}
+        runId={runInfo.run_uuid}
+        onClose={() => {
+          setIsModalOpen(false);
+        }}
+        onSubmit={async (stateId: string) => {
+          fetchEndpoint({
+            relativeUrl: `ajax-api/2.0/mlflow/states/get?state_id=${stateId}`,
+            method: HTTPMethods.GET,
+            success: async ({ resolve, response }: any) => {
+              const json = await response.json();
+              const name = json?.state.name;
+              setState(name);
+              resolve();
+            },
+          });
+        }}
+      />
       <RunViewDescriptionBox runUuid={runUuid} tags={tags} onDescriptionChanged={onRunDataUpdated} />
       <Typography.Title level={4}>
         <FormattedMessage defaultMessage="Details" description="Run page > Overview > Details section title" />
@@ -107,7 +149,23 @@ export const RunViewOverviewV2 = ({
             title={
               <FormattedMessage defaultMessage="State" description="Run page > Overview > Run author section state" />
             }
-            value={state}
+            value={
+              <div css={{ display: 'flex', flexDirection: 'row', width: '200px', alignItems: 'center' }}>
+                <span>{state}</span>
+                {
+                  <Button
+                    size="small"
+                    css={{ marginLeft: 'auto' }}
+                    componentId={'codegen_mlflow_app_src_common_components_editablenote.tsx_5251'}
+                    onClick={() => {
+                      setIsModalOpen(true)
+                    }}
+                  >
+                    Change
+                  </Button>
+                }
+              </div>
+            }
           />
           <RunViewMetadataRow
             title={

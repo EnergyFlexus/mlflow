@@ -42,7 +42,7 @@ import { getStartTimeColumnDisplayName } from '../../utils/experimentPage.common
 import { ExperimentRunsSelectorResult } from '../../utils/experimentRuns.selector';
 import { ExperimentViewRefreshButton } from './ExperimentViewRefreshButton';
 import { RunsSearchAutoComplete } from './RunsSearchAutoComplete';
-import type { ExperimentStoreEntities, DatasetSummary } from '../../../../types';
+import type { ExperimentStoreEntities, DatasetSummary, RunState } from '../../../../types';
 import { datasetSummariesEqual } from '../../../../utils/DatasetUtils';
 import { CreateNotebookRunModal } from 'experiment-tracking/components/evaluation-artifacts-compare/CreateNotebookRunModal';
 import { PreviewBadge } from 'shared/building_blocks/PreviewBadge';
@@ -66,12 +66,6 @@ export type ExperimentViewRunsControlsFiltersProps = {
   refreshRuns: () => void;
   viewMaximized: boolean;
 };
-
-interface RunState {
-  experiment_id: string;
-  state_id: string;
-  name: string;
-}
 
 export const ExperimentViewRunsControlsFilters = React.memo(
   ({
@@ -98,29 +92,26 @@ export const ExperimentViewRunsControlsFilters = React.memo(
     const [states, setStates] = useState<RunState[]>([]);
 
     useEffect(() => {
-      const fetchData = async () => {
-        fetchEndpoint({
-          relativeUrl: `ajax-api/2.0/mlflow/states/search`,
-          method: HTTPMethods.POST,
-          body: JSON.stringify({
-            experiment_id: experimentId,
-          }),
-          success: async ({ resolve, response }: any) => {
-            const json = await response.json();
-            const states = json.states as RunState[] | undefined;
-            setStates([
-              {
-                experiment_id: experimentId,
-                state_id: '',
-                name: 'All',
-              },
-              ...(states ? states : [])
-            ]);
-            resolve();
-          },
-        });
-      };
-      fetchData();
+      fetchEndpoint({
+        relativeUrl: `ajax-api/2.0/mlflow/states/search`,
+        method: HTTPMethods.POST,
+        body: JSON.stringify({
+          experiment_id: experimentId,
+        }),
+        success: async ({ resolve, response }: any) => {
+          const json = await response.json();
+          const states = json.states as RunState[] | undefined;
+          setStates([
+            {
+              experiment_id: experimentId,
+              state_id: '',
+              name: 'All',
+            },
+            ...(states ? states : []),
+          ]);
+          resolve();
+        },
+      });
     }, [setStates, experimentId]);
 
     // Use modernized view mode value getter if flag is set
