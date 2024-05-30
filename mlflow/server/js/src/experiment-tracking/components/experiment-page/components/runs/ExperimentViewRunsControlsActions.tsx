@@ -73,7 +73,7 @@ export const ExperimentViewRunsControlsActions = React.memo(
     return (
       <>
         <div css={styles.controlBar}>
-          {/* <Button
+          <Button
             componentId="codegen_mlflow_app_src_experiment-tracking_components_experiment-page_components_runs_experimentviewrunscontrolsactions.tsx_110"
             data-testid="run-rename-button"
             onClick={renameButtonClicked}
@@ -84,35 +84,31 @@ export const ExperimentViewRunsControlsActions = React.memo(
               description="Label for the rename run button above the experiment runs table"
             />
           </Button>
-          {lifecycleFilter === LIFECYCLE_FILTER.ACTIVE ? (
-            <Button
-              componentId="codegen_mlflow_app_src_experiment-tracking_components_experiment-page_components_runs_experimentviewrunscontrolsactions.tsx_117"
-              data-testid="runs-delete-button"
-              disabled={!canRestoreRuns}
-              onClick={onDeleteRun}
-              danger
-            >
-              <FormattedMessage
-                defaultMessage="Delete"
-                // eslint-disable-next-line max-len
-                description="String for the delete button to delete a particular experiment run"
-              />
-            </Button>
-          ) : null}
-          {lifecycleFilter === LIFECYCLE_FILTER.DELETED ? (
-            <Button
-              componentId="codegen_mlflow_app_src_experiment-tracking_components_experiment-page_components_runs_experimentviewrunscontrolsactions.tsx_126"
-              data-testid="runs-restore-button"
-              disabled={!canRestoreRuns}
-              onClick={onRestoreRun}
-            >
-              <FormattedMessage
-                defaultMessage="Restore"
-                // eslint-disable-next-line max-len
-                description="String for the restore button to undo the experiments that were deleted"
-              />
-            </Button>
-          ) : null} */}
+          <Button
+            componentId="codegen_mlflow_app_src_experiment-tracking_components_experiment-page_components_runs_experimentviewrunscontrolsactions.tsx_117"
+            data-testid="runs-delete-button"
+            disabled={!canRestoreRuns}
+            onClick={onDeleteRun}
+            danger
+          >
+            <FormattedMessage
+              defaultMessage="Delete"
+              // eslint-disable-next-line max-len
+              description="String for the delete button to delete a particular experiment run"
+            />
+          </Button>
+          <Button
+            componentId="codegen_mlflow_app_src_experiment-tracking_components_experiment-page_components_runs_experimentviewrunscontrolsactions.tsx_126"
+            data-testid="runs-restore-button"
+            disabled={!canRestoreRuns}
+            onClick={onRestoreRun}
+          >
+            <FormattedMessage
+              defaultMessage="Restore"
+              // eslint-disable-next-line max-len
+              description="String for the restore button to undo the experiments that were deleted"
+            />
+          </Button>
           <div css={styles.buttonSeparator} />
           <CompareRunsButtonWrapper>
             <Button
