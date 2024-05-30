@@ -107,14 +107,14 @@ export const ExperimentViewRunsControlsFilters = React.memo(
           }),
           success: async ({ resolve, response }: any) => {
             const json = await response.json();
-            const states = json.states as RunState[];
+            const states = json.states as RunState[] | undefined;
             setStates([
               {
                 experiment_id: experimentId,
                 state_id: '',
                 name: 'All',
               },
-              ...states,
+              ...(states ? states : [])
             ]);
             resolve();
           },
@@ -273,12 +273,14 @@ export const ExperimentViewRunsControlsFilters = React.memo(
                                 relativeUrl: 'ajax-api/2.0/mlflow/states/delete',
                                 method: HTTPMethods.POST,
                                 body: JSON.stringify({
-                                  state_id: state.state_id
+                                  state_id: state.state_id,
                                 }),
                                 success: async ({ resolve, response }: any) => {
-                                  setStates(states.filter((_state) => {
-                                    return state.state_id !== _state.state_id
-                                  }))
+                                  setStates(
+                                    states.filter((_state) => {
+                                      return state.state_id !== _state.state_id;
+                                    }),
+                                  );
                                 },
                               });
                             }}
