@@ -659,9 +659,17 @@ class FileStore(AbstractStore):
             sets_state = actual_state
 
         runs = self.search_runs([experiment_id], "", "All")
-        runs_active = [run for run in runs if run.info.run_state_id == active_state.state_id]
-        for run_active in runs_active:
-            run_active.info._copy_with_overrides(run_state_id=actual_state.state_id)
+        if active_state is not None and actual_state is not None:
+            runs_active = [run for run in runs if run.info.run_state_id == active_state.state_id]
+            for run_active in runs_active:
+                info = run_active.info
+                self.update_run_info(
+                    info.run_id,
+                    RunStatus.from_string(info.status),
+                    info.end_time,
+                    info.run_name,
+                    state_id=actual_state.state_id,
+                )
 
         if sets_state is not None:
             run_info = RunInfo(
