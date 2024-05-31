@@ -826,7 +826,7 @@ class FileStore(AbstractStore):
         dict_run_state = dict(run_state)
 
         for s in states["states"]:
-            if s["name"] == run_state.name:
+            if s["name"] == run_state.name and s["experiment_id"] == experiment_id:
                 return run_state
 
         states["states"].append(dict_run_state)
