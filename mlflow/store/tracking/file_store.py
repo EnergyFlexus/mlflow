@@ -451,17 +451,25 @@ class FileStore(AbstractStore):
                 f"Could not find experiment with ID {experiment_id}",
                 databricks_pb2.RESOURCE_DOES_NOT_EXIST,
             )
+        deleted_state = self.search_state_by_name(experiment_id, "Deleted")
+        if deleted_state is None:
+            raise MlflowException(
+                "State 'Deleted' does not exist.",
+                databricks_pb2.RESOURCE_DOES_NOT_EXIST,
+            )
+
         experiment = self._get_experiment(experiment_id)
         experiment._lifecycle_stage = LifecycleStage.DELETED
         deletion_time = get_current_time_millis()
         experiment._set_last_update_time(deletion_time)
-        # runs = self._list_run_infos(experiment_id, view_type=ViewType.ACTIVE_ONLY)
-        # for run_info in runs:
-        #     if run_info is not None: TODO set state to DELETED
-        #         new_info = run_info._copy_with_overrides(lifecycle_stage=LifecycleStage.DELETED)
-        #         self._overwrite_run_info(new_info, deleted_time=deletion_time)
-        #     else:
-        #         logging.warning("Run metadata is in invalid state.")
+        runs = self._list_run_infos(experiment_id, "All")
+        for run_info in runs:
+            if run_info is not None and run_info.run_state_id != deleted_state.state_id:
+                run_info = self._get_run_info(run_info.run_id)
+                new_info = run_info._copy_with_overrides(run_state_id=deleted_state.state_id)
+                self._overwrite_run_info(new_info, deleted_time=get_current_time_millis())
+            else:
+                logging.warning("Run metadata is in invalid state.")
         meta_dir = os.path.join(self.root_directory, experiment_id)
         overwrite_yaml(
             root=meta_dir,
@@ -469,10 +477,6 @@ class FileStore(AbstractStore):
             data=dict(experiment),
         )
         mv(experiment_dir, self.trash_folder)
-        states = self.search_states(experiment_id)
-
-        for state in states:
-            self.delete_state(state.state_id)
 
     def _hard_delete_experiment(self, experiment_id):
         """
@@ -480,6 +484,11 @@ class FileStore(AbstractStore):
         This is used by the ``mlflow gc`` command line and is not intended to be used elsewhere.
         """
         experiment_dir = self._get_experiment_path(experiment_id, ViewType.DELETED_ONLY)
+        states = self.search_states(experiment_id)
+
+        for state in states:
+            self.delete_state(state.state_id)
+
         shutil.rmtree(experiment_dir)
 
     def restore_experiment(self, experiment_id):
@@ -501,13 +510,22 @@ class FileStore(AbstractStore):
         meta_dir = os.path.join(self.root_directory, experiment_id)
         experiment._lifecycle_stage = LifecycleStage.ACTIVE
         experiment._set_last_update_time(get_current_time_millis())
-        # runs = self._list_run_infos(experiment_id, view_type=ViewType.DELETED_ONLY)
-        # for run_info in runs:
-        #     if run_info is not None: TODO set state active
-        #         new_info = run_info._copy_with_overrides(lifecycle_stage=LifecycleStage.ACTIVE)
-        #         self._overwrite_run_info(new_info, deleted_time=None)
-        #     else:
-        #         logging.warning("Run metadata is in invalid state.")
+        runs = self._list_run_infos(experiment_id, view_type="Deleted")
+
+        deleted_state = self.search_state_by_name(experiment_id, "Deleted")
+        if deleted_state is None:
+            raise MlflowException(
+                "State 'Deleted' does not exist.",
+                databricks_pb2.RESOURCE_DOES_NOT_EXIST,
+            )
+
+        for run_info in runs:
+            if run_info is not None:
+                run_info = self._get_run_info(run_info.run_id)
+                new_info = run_info._copy_with_overrides(run_state_id=deleted_state.state_id)
+                self._overwrite_run_info(new_info, deleted_time=get_current_time_millis())
+            else:
+                logging.warning("Run metadata is in invalid state.")
         overwrite_yaml(
             root=meta_dir,
             file_name=FileStore.META_DATA_FILE_NAME,
@@ -544,9 +562,15 @@ class FileStore(AbstractStore):
             raise MlflowException(
                 f"Run '{run_id}' metadata is in invalid state.", databricks_pb2.INVALID_STATE
             )
-        # TODO set state deleted
-        # new_info = run_info._copy_with_overrides(lifecycle_stage=LifecycleStage.DELETED)
-        # self._overwrite_run_info(new_info, deleted_time=get_current_time_millis())
+        run_info = self._get_run_info(run_id)
+        deleted_state = self.search_state_by_name(run_info.experiment_id, "Deleted")
+        if deleted_state is None:
+            raise MlflowException(
+                "State 'Deleted' does not exist.",
+                databricks_pb2.RESOURCE_DOES_NOT_EXIST,
+            )
+        new_info = run_info._copy_with_overrides(run_state_id=deleted_state.state_id)
+        self._overwrite_run_info(new_info, deleted_time=get_current_time_millis())
 
     def _hard_delete_run(self, run_id):
         """
@@ -584,9 +608,15 @@ class FileStore(AbstractStore):
             raise MlflowException(
                 f"Run '{run_id}' metadata is in invalid state.", databricks_pb2.INVALID_STATE
             )
-        # TODO set state active
-        # new_info = run_info._copy_with_overrides(lifecycle_stage=LifecycleStage.ACTIVE)
-        # self._overwrite_run_info(new_info, deleted_time=None)
+        actual_state = self.search_state_by_name(run_info.experiment_id, "Actual")
+        if actual_state is None:
+            raise MlflowException(
+                "State 'Actual' does not exist.",
+                databricks_pb2.RESOURCE_DOES_NOT_EXIST,
+            )
+
+        new_info = run_info._copy_with_overrides(run_state_id=actual_state.state_id)
+        self._overwrite_run_info(new_info, deleted_time=get_current_time_millis())
 
     def _find_experiment_folder(self, run_path):
         """
@@ -1120,8 +1150,12 @@ class FileStore(AbstractStore):
                         exc_info=True,
                     )
                     continue
-                # TODO states match!
-                if view_type == "All" or self.get_state(run_info.run_state_id).name == view_type:
+                is_view_all = view_type == "All"
+                is_none = run_info.run_state_id is None
+
+                if is_view_all or (
+                    not is_none and self.get_state(run_info.run_state_id).name == view_type
+                ):
                     run_infos.append(run_info)
             except MissingConfigException as rnfe:
                 # trap malformed run exception and log warning
