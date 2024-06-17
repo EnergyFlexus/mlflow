@@ -1725,7 +1725,6 @@ def create_experiment(
 
 
 def create_state(
-    self,
     experiment_id: str,
     name: str,
 ) -> RunState:
@@ -1742,7 +1741,7 @@ def create_state(
     return MlflowClient().create_state(experiment_id, name)
 
 
-def set_state(self, run_id: str, state_id: str) -> Run:
+def set_state(run_id: str, state_id: str) -> Run:
     """
     Sets state to a run.
 
@@ -1758,7 +1757,6 @@ def set_state(self, run_id: str, state_id: str) -> Run:
 
 
 def get_state(
-    self,
     state_id: str,
 ) -> RunState:
     """
@@ -1773,7 +1771,7 @@ def get_state(
     return MlflowClient().get_state(state_id)
 
 
-def delete_state(self, state_id):
+def delete_state(state_id):
     """
     Delete a :py:class:`mlflow.entities.RunState` object.
 
@@ -1785,7 +1783,7 @@ def delete_state(self, state_id):
     return MlflowClient().delete_state(state_id=state_id)
 
 
-def search_states(self, experiment_id):
+def search_states(experiment_id):
     """Search states.
 
     Returns:
@@ -1795,7 +1793,7 @@ def search_states(self, experiment_id):
     return MlflowClient().search_states(experiment_id=experiment_id)
 
 
-def search_state_by_name(self, experiment_id, name):
+def search_state_by_name(experiment_id, name):
     """Search state by name.
 
     Returns:

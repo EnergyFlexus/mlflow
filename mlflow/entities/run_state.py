@@ -61,7 +61,7 @@ class RunState(_MlflowObject):
 
     @classmethod
     def from_proto(cls, proto):
-        return cls(state_id=proto.state_id, experiment_id=proto.experimdent_id, name=proto.name)
+        return cls(state_id=proto.state_id, experiment_id=proto.experiment_id, name=proto.name)
 
     @classmethod
     def from_dictionary(cls, the_dict):

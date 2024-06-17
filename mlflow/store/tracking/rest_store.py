@@ -1,18 +1,21 @@
 from typing import List, Optional
 
-from mlflow.entities import DatasetInput, Experiment, Metric, Run, RunInfo, ViewType
+from mlflow.entities import DatasetInput, Experiment, Metric, Run, RunInfo, RunState, ViewType
 from mlflow.exceptions import MlflowException
 from mlflow.protos import databricks_pb2
 from mlflow.protos.service_pb2 import (
     CreateExperiment,
     CreateRun,
+    CreateState,
     DeleteExperiment,
     DeleteRun,
+    DeleteState,
     DeleteTag,
     GetExperiment,
     GetExperimentByName,
     GetMetricHistory,
     GetRun,
+    GetState,
     LogBatch,
     LogInputs,
     LogMetric,
@@ -23,7 +26,10 @@ from mlflow.protos.service_pb2 import (
     RestoreRun,
     SearchExperiments,
     SearchRuns,
+    SearchStateByName,
+    SearchStates,
     SetExperimentTag,
+    SetState,
     SetTag,
     UpdateExperiment,
     UpdateRun,
@@ -100,6 +106,46 @@ class RestStore(AbstractStore):
         )
         response_proto = self._call_endpoint(CreateExperiment, req_body)
         return response_proto.experiment_id
+
+    def create_state(
+        self,
+        experiment_id: str,
+        name: str,
+    ) -> RunState:
+        req_body = message_to_json(CreateState(name=name, experiment_id=experiment_id))
+        response_proto = self._call_endpoint(CreateState, req_body)
+        return RunState.from_proto(response_proto.state)
+
+    def set_state(self, run_id: str, state_id: str) -> Run:
+        req_body = message_to_json(SetState(run_id=run_id, state_id=state_id))
+        response_proto = self._call_endpoint(CreateState, req_body)
+        return Run.from_proto(response_proto.run)
+
+    def get_state(
+        self,
+        state_id: str,
+    ) -> RunState:
+        req_body = message_to_json(GetState(state_id=state_id))
+        response_proto = self._call_endpoint(GetState, req_body)
+        return RunState.from_proto(response_proto.state)
+
+    def delete_state(self, state_id):
+        req_body = message_to_json(DeleteState(state_id=state_id))
+        self._call_endpoint(DeleteState, req_body)
+        return
+
+    def search_states(self, experiment_id):
+        req_body = message_to_json(SearchStates(experiment_id=experiment_id))
+        response_proto = self._call_endpoint(SearchStates, req_body)
+        states = []
+        for s in response_proto.states:
+            states.append(RunState.from_proto(s))
+        return states
+
+    def search_state_by_name(self, experiment_id, name):
+        req_body = message_to_json(SearchStateByName(experiment_id=experiment_id, name=name))
+        response_proto = self._call_endpoint(SearchStateByName, req_body)
+        return RunState.from_proto(response_proto.state)
 
     def get_experiment(self, experiment_id):
         """
