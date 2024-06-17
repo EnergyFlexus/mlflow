@@ -564,11 +564,10 @@ class FileStore(AbstractStore):
             )
         run_info = self._get_run_info(run_id)
         deleted_state = self.search_state_by_name(run_info.experiment_id, "Deleted")
+
         if deleted_state is None:
-            raise MlflowException(
-                "State 'Deleted' does not exist.",
-                databricks_pb2.RESOURCE_DOES_NOT_EXIST,
-            )
+            self.create_default_states(run_info.experiment_id)
+
         new_info = run_info._copy_with_overrides(run_state_id=deleted_state.state_id)
         self._overwrite_run_info(new_info, deleted_time=get_current_time_millis())
 
@@ -610,10 +609,7 @@ class FileStore(AbstractStore):
             )
         actual_state = self.search_state_by_name(run_info.experiment_id, "Actual")
         if actual_state is None:
-            raise MlflowException(
-                "State 'Actual' does not exist.",
-                databricks_pb2.RESOURCE_DOES_NOT_EXIST,
-            )
+            self.create_default_states(run_info.experiment_id)
 
         new_info = run_info._copy_with_overrides(run_state_id=actual_state.state_id)
         self._overwrite_run_info(new_info, deleted_time=get_current_time_millis())
@@ -681,51 +677,33 @@ class FileStore(AbstractStore):
         run_uuid = uuid.uuid4().hex
         artifact_uri = self._get_artifact_dir(experiment_id, run_uuid)
 
+        self.create_default_states(experiment_id)
+
         active_state = self.search_state_by_name(experiment_id, "Active")
         actual_state = self.search_state_by_name(experiment_id, "Actual")
 
-        sets_state = active_state
-        if sets_state is None and actual_state is not None:
-            sets_state = actual_state
-
         runs = self.search_runs([experiment_id], "", "All")
-        if active_state is not None and actual_state is not None:
-            runs_active = [run for run in runs if run.info.run_state_id == active_state.state_id]
-            for run_active in runs_active:
-                info = run_active.info
-                self.update_run_info(
-                    info.run_id,
-                    RunStatus.from_string(info.status),
-                    info.end_time,
-                    info.run_name,
-                    state_id=actual_state.state_id,
-                )
-
-        if sets_state is not None:
-            run_info = RunInfo(
-                run_uuid=run_uuid,
-                run_id=run_uuid,
-                run_name=run_name,
-                experiment_id=experiment_id,
-                artifact_uri=artifact_uri,
-                user_id=user_id,
-                status=RunStatus.to_string(RunStatus.RUNNING),
-                start_time=start_time,
-                end_time=None,
-                run_state_id=sets_state.state_id,
+        runs_active = [run for run in runs if run.info.run_state_id == active_state.state_id]
+        for run_active in runs_active:
+            info = run_active.info
+            self.update_run_info(
+                info.run_id,
+                RunStatus.from_string(info.status),
+                info.end_time,
+                info.run_name,
+                state_id=actual_state.state_id,
             )
-        else:
-            run_info = RunInfo(
-                run_uuid=run_uuid,
-                run_id=run_uuid,
-                run_name=run_name,
-                experiment_id=experiment_id,
-                artifact_uri=artifact_uri,
-                user_id=user_id,
-                status=RunStatus.to_string(RunStatus.RUNNING),
-                start_time=start_time,
-                end_time=None,
-            )
+        run_info = RunInfo(
+            run_uuid=run_uuid,
+            run_id=run_uuid,
+            run_name=run_name,
+            experiment_id=experiment_id,
+            artifact_uri=artifact_uri,
+            user_id=user_id,
+            status=RunStatus.to_string(RunStatus.RUNNING),
+            start_time=start_time,
+            end_time=None,
+        )
 
         # Persist run metadata and create directories for logging metrics, parameters, artifacts
         run_dir = self._get_run_dir(run_info.experiment_id, run_info.run_id)
@@ -908,6 +886,25 @@ class FileStore(AbstractStore):
             raise MlflowException(
                 "States does not exist at all.",
                 databricks_pb2.RESOURCE_DOES_NOT_EXIST,
+            )
+
+        state = self.get_state(state_id)
+        actual_state = self.search_state_by_name(state.experiment_id, "Actual")
+
+        if actual_state is None:
+            self.create_default_states(state.experiment_id)
+
+        runs = self.search_runs([state.experiment_id], "", "All")
+        for run in runs:
+            if run.info.run_state_id != state_id:
+                continue
+            info = run.info
+            self.update_run_info(
+                info.run_id,
+                RunStatus.from_string(info.status),
+                info.end_time,
+                info.run_name,
+                state_id=actual_state.state_id,
             )
 
         states_dict = read_yaml(_default_root_dir(), FileStore.META_STATES_FILE_NAME)
