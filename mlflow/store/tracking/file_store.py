@@ -703,6 +703,7 @@ class FileStore(AbstractStore):
             status=RunStatus.to_string(RunStatus.RUNNING),
             start_time=start_time,
             end_time=None,
+            run_state_id=active_state.state_id,
         )
 
         # Persist run metadata and create directories for logging metrics, parameters, artifacts
