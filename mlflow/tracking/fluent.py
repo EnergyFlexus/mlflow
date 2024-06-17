@@ -20,6 +20,7 @@ from mlflow.entities import (
     Metric,
     Param,
     Run,
+    RunState,
     RunStatus,
     RunTag,
     ViewType,
@@ -1721,6 +1722,87 @@ def create_experiment(
         Creation timestamp: 1662004217511
     """
     return MlflowClient().create_experiment(name, artifact_location, tags)
+
+
+def create_state(
+    self,
+    experiment_id: str,
+    name: str,
+) -> RunState:
+    """
+    Create a :py:class:`mlflow.entities.RubState` object.
+
+    Args:
+        experiment_id: The string ID of the experiment to create a run in.
+        name: Name of the state
+
+    Returns:
+        :py:class:`mlflow.entities.RunState` that was created.
+    """
+    return MlflowClient().create_state(experiment_id, name)
+
+
+def set_state(self, run_id: str, state_id: str) -> Run:
+    """
+    Sets state to a run.
+
+    Args:
+        run_id: Id of the run.
+        state_id: Id of the state.
+
+    Returns:
+        :py:class:`mlflow.entities.Run` that was updated.
+    """
+
+    return MlflowClient().set_state(run_id=run_id, state_id=state_id)
+
+
+def get_state(
+    self,
+    state_id: str,
+) -> RunState:
+    """
+    Get a :py:class:`mlflow.entities.RunState` object.
+
+    Args:
+        state_id: The string ID of the state.
+
+    Returns:
+        :py:class:`mlflow.entities.RunState`.
+    """
+    return MlflowClient().get_state(state_id)
+
+
+def delete_state(self, state_id):
+    """
+    Delete a :py:class:`mlflow.entities.RunState` object.
+
+    Args:
+        state_id: The string ID of the state.
+
+    """
+
+    return MlflowClient().delete_state(state_id=state_id)
+
+
+def search_states(self, experiment_id):
+    """Search states.
+
+    Returns:
+        :py:class:`RunState <mlflow.entities.RunState>` objects.
+
+    """
+    return MlflowClient().search_states(experiment_id=experiment_id)
+
+
+def search_state_by_name(self, experiment_id, name):
+    """Search state by name.
+
+    Returns:
+        :py:class:`RunState <mlflow.entities.RunState>` object.
+
+    """
+    return MlflowClient().search_state_by_name(experiment_id=experiment_id, name=name)
 
 
 def delete_experiment(experiment_id: str) -> None:

@@ -700,9 +700,6 @@ message Experiment {
 
   // Tags: Additional metadata key-value pairs.
   repeated ExperimentTag tags = 7;
-  
-  // All states for the experiment.
-  repeated string run_state_ids = 8;
 }
 
 // DatasetInput. Represents a dataset and input tags.
