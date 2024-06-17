@@ -889,9 +889,17 @@ class FileStore(AbstractStore):
                 databricks_pb2.RESOURCE_DOES_NOT_EXIST,
             )
 
+        states_dict = read_yaml(_default_root_dir(), FileStore.META_STATES_FILE_NAME)
+        states_all = states_dict["states"]
+        states_all = list(filter(lambda s: s["state_id"] != state_id, states_all))
+
+        states_dict["states"] = states_all
+        write_yaml(
+            _default_root_dir(), FileStore.META_STATES_FILE_NAME, states_dict, overwrite=True
+        )
+
         state = self.get_state(state_id)
         actual_state = self.search_state_by_name(state.experiment_id, "Actual")
-
         if actual_state is None:
             self.create_default_states(state.experiment_id)
 
@@ -908,14 +916,6 @@ class FileStore(AbstractStore):
                 state_id=actual_state.state_id,
             )
 
-        states_dict = read_yaml(_default_root_dir(), FileStore.META_STATES_FILE_NAME)
-        states_all = states_dict["states"]
-        states_all = list(filter(lambda s: s["state_id"] != state_id, states_all))
-
-        states_dict["states"] = states_all
-        write_yaml(
-            _default_root_dir(), FileStore.META_STATES_FILE_NAME, states_dict, overwrite=True
-        )
         return {}
 
     def _get_run_from_info(self, run_info):
