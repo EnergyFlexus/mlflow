@@ -341,7 +341,7 @@ class RestStore(AbstractStore):
         sr = SearchRuns(
             experiment_ids=experiment_ids,
             filter=filter_string,
-            run_view_type=ViewType.to_proto(run_view_type),
+            run_view_type=run_view_type,
             max_results=max_results,
             order_by=order_by,
             page_token=page_token,
