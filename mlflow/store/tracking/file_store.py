@@ -1149,11 +1149,9 @@ class FileStore(AbstractStore):
                     )
                     continue
                 is_view_all = view_type == "All"
-                is_none = run_info.run_state_id is None
+                state_name = self.get_state(run_info.run_state_id).name
 
-                if is_view_all or (
-                    not is_none and self.get_state(run_info.run_state_id).name == view_type
-                ):
+                if (is_view_all and state_name != "Deleted") or state_name == view_type:
                     run_infos.append(run_info)
             except MissingConfigException as rnfe:
                 # trap malformed run exception and log warning
