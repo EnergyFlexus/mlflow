@@ -806,7 +806,7 @@ class FileStore(AbstractStore):
 
         for s in states["states"]:
             if s["name"] == run_state.name and s["experiment_id"] == experiment_id:
-                return run_state
+                return RunState.from_dictionary(s)
 
         states["states"].append(dict_run_state)
         write_yaml(
