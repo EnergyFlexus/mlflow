@@ -118,7 +118,7 @@ class RestStore(AbstractStore):
 
     def set_state(self, run_id: str, state_id: str) -> Run:
         req_body = message_to_json(SetState(run_id=run_id, state_id=state_id))
-        response_proto = self._call_endpoint(CreateState, req_body)
+        response_proto = self._call_endpoint(SetState, req_body)
         return Run.from_proto(response_proto.run)
 
     def get_state(
